@@ -7,13 +7,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.apache.pekko.actor.ActorRef;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class ZoneOverviewPanel extends BorderPane {
-    // unica fonte di verità, condivisa con il menu (LinkedHashMap per mantenere l'ordine dei tile)
     private final ObservableMap<String, List<String>> sensorsByZone =
             FXCollections.observableMap(new LinkedHashMap<>());
 
@@ -21,7 +21,7 @@ public final class ZoneOverviewPanel extends BorderPane {
     private final AlarmIndicator alarmIndicator;
     private final Label systemStateLabel = new Label();
 
-    public ZoneOverviewPanel() {
+    public ZoneOverviewPanel(ActorRef uiActor) {
         setPadding(new Insets(8));
         setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
@@ -29,7 +29,7 @@ public final class ZoneOverviewPanel extends BorderPane {
         HBox alarm = new HBox(6, systemStateLabel, alarmIndicator);
         alarm.setAlignment(Pos.CENTER_RIGHT);
 
-        ZonePopupMenu popupMenu = new ZonePopupMenu(sensorsByZone);
+        ZonePopupMenu popupMenu = new ZonePopupMenu(sensorsByZone, uiActor);
         zoneCanvas = new ZoneCanvas(List.of(), popupMenu);
 
         setTop(alarm);

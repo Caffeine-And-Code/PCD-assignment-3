@@ -5,14 +5,17 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import org.apache.pekko.actor.ActorRef;
 
 import java.util.List;
 
 final class ZonePopupMenu extends ContextMenu {
     private final ObservableMap<String, List<String>> sensorsByZone;
+    private final ActorRef uiActor;
 
-    ZonePopupMenu(ObservableMap<String, List<String>> sensorsByZone) {
+    ZonePopupMenu(ObservableMap<String, List<String>> sensorsByZone, ActorRef uiActor) {
         this.sensorsByZone = sensorsByZone;
+        this.uiActor = uiActor;
     }
 
     void showFor(Node owner, double screenX, double screenY, String zone) {
@@ -38,7 +41,7 @@ final class ZonePopupMenu extends ContextMenu {
         // le zone vengono ricalcolate a ogni apertura, quindi sono sempre aggiornate
         List<String> zones = List.copyOf(sensorsByZone.keySet());
         for (String sensor : sensors) {
-            getItems().add(new SensorMenu(sensor, zone, zones));
+            getItems().add(new SensorMenu(sensor, zone, zones, uiActor));
         }
     }
 }

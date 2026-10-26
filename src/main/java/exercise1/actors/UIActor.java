@@ -56,7 +56,8 @@ public class UIActor extends AbstractActorWithStash {
                 .match(UpdatedZoneSensors.class, this::handleUpdatedZoneSensors)
                 .match(AlarmActiveUpdate.class, this::handleAlarmActiveUpdate)
                 // "frontend" messages
-                .match(EnterPinDigit.class, this::handleEnterPinDigit)
+                .match(AssignSensorToZone.class, this::onAssignSensorToZone)
+                .match(EnterPinDigit.class, this::onEnterPinDigit)
                 .match(UpdateEntryDelay.class, this::onUpdateEntryRequest)
                 .match(UpdateExitDelay.class, this::onUpdateExitRequest)
                 .match(GetZonesRequest.class, this::onGetZoneRequest)
@@ -121,9 +122,7 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     private void handleUpdatedZoneSensors(UpdatedZoneSensors data) {
-        Platform.runLater(() -> {
-            // aggiorna i sensori
-        });
+        Platform.runLater(() -> this.zoneCanvas.setSensorsByZone(data.zoneSensors()));
     }
 
     private void handleAlarmActiveUpdate(AlarmActiveUpdate data) {
@@ -150,7 +149,11 @@ public class UIActor extends AbstractActorWithStash {
         controlUnit.tell(data, getSelf());
     }
 
-    private void handleEnterPinDigit(EnterPinDigit data) {
+    private void onAssignSensorToZone(AssignSensorToZone assignSensorToZone) {
+        controlUnit.tell(assignSensorToZone, getSelf());
+    }
+
+    private void onEnterPinDigit(EnterPinDigit data) {
         if (currentPin.length() >= PIN_LENGHT) {
             return;
         }

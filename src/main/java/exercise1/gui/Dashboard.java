@@ -26,7 +26,7 @@ public final class Dashboard extends BorderPane {
 
         setLeft(controls);
 
-        final var zoneOverview = new ZoneOverviewPanel();
+        final var zoneOverview = new ZoneOverviewPanel(uiActor);
         uiActor.tell(new MessagesProtocol.GetZonesRequest(), ActorRef.noSender());
         uiActor.tell(new MessagesProtocol.GetSystemStateRequest(), ActorRef.noSender());
         setCenter(zoneOverview);
