@@ -2,6 +2,7 @@ package exercise1.gui;
 
 import exercise1.protocols.MessagesProtocol;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -13,6 +14,10 @@ public final class Dashboard extends BorderPane {
     public Dashboard(ActorRef uiActor) {
         VBox controls = new VBox(10);
         final var errorLabel = new Label("");
+        errorLabel.setAlignment(Pos.CENTER);
+        errorLabel.setMaxWidth(Double.MAX_VALUE);
+        errorLabel.setWrapText(true);
+        errorLabel.setStyle("-fx-text-fill: #b42318; -fx-font-size: 13px; -fx-font-weight: bold;");
         controls.setPrefWidth(200);
         controls.getChildren().add(new KeypadPanel(uiActor));
 

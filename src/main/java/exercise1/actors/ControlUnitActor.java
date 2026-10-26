@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ControlUnitActor extends AbstractActorWithStash {
 
@@ -25,6 +26,15 @@ public class ControlUnitActor extends AbstractActorWithStash {
     private final String correctPin = "12345";
 
     private Cancellable entryTimeout;
+
+    public void setZoneSensors(Map<String, List<String>> initialZoneSensors) {
+        zoneSensors.clear();
+        activeZones.clear();
+        initialZoneSensors.forEach((zoneId, sensors) -> {
+            zoneSensors.put(zoneId, new ArrayList<>(sensors));
+            activeZones.put(zoneId, false);
+        });
+    }
 
     @Override
     public Receive createReceive() {
