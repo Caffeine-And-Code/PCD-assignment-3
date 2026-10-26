@@ -8,9 +8,10 @@ import org.apache.pekko.actor.Props;
 import javax.swing.*;
 
 public class UIActor extends AbstractActorWithStash {
-
+    private static final int PIN_LENGHT = 5;
     private JLabel entryDelayRef;
     private JLabel exitDelayRef;
+    private String currentPin;
     // TODO: zoneCanvasRef, alarmRef
 
     public static Props props() {
@@ -31,6 +32,7 @@ public class UIActor extends AbstractActorWithStash {
         //noinspection deprecation
         return receiveBuilder()
                 .match(BindUi.class, this::handleBindUi) // enables the re-bind
+                // "backend" messages
                 .match(GetZonesReply.class, this::handleGetZoneReply)
                 .match(ExitDelayUpdated.class, this::handleExitDelayUpdated)
                 .match(EntryDelayUpdated.class, this::handleEntryDelayUpdated)
@@ -38,6 +40,8 @@ public class UIActor extends AbstractActorWithStash {
                 .match(UpdatedZoneStates.class, this::handleUpdatedZoneStates)
                 .match(UpdatedZoneSensors.class, this::handleUpdatedZoneSensors)
                 .match(AlarmActiveUpdate.class, this::handleAlarmActiveUpdate)
+                // "frontend" messages
+                .match(EnterPinDigit.class, this::handleEnterPinDigit)
                 .build();
     }
 
@@ -86,5 +90,19 @@ public class UIActor extends AbstractActorWithStash {
         Platform.runLater(() -> {
             // aggiorna l'indicatore dell'allarme
         });
+    }
+
+    private void handleEnterPinDigit(EnterPinDigit data) {
+        if (currentPin.length() >= PIN_LENGHT) {
+            return;
+        }
+
+        currentPin += data.digit();
+
+        if(currentPin.length() >= PIN_LENGHT) {
+            // send PinEntered message
+
+            currentPin = "";
+        }
     }
 }
