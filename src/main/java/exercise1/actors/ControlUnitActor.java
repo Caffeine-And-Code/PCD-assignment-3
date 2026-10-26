@@ -94,7 +94,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
     public void OnCreateZone(CreateZone createZone) {
         var zoneId = createZone.zoneId().trim();
         if (!zoneId.isEmpty()) {
-            getContext().actorOf(Props.create(ZoneActor.class, zoneId));
+            getContext().actorOf(Props.create(ZoneActor.class, getSender(), zoneId), zoneId);
             this.zoneSensors.put(zoneId, new ArrayList<>());
             activeZones.put(zoneId, false);
         }

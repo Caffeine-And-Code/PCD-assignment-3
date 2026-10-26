@@ -22,14 +22,15 @@ public final class AlarmApplication extends Application {
     @Override
     public void start(Stage stage) {
         system = ActorSystem.create("alarm");
+        ActorRef controlUnit = system.actorOf(Props.create(ControlUnitActor.class), "controlUnit");
+        ActorRef ui = system.actorOf(UIActor.props(controlUnit), "ui");
+
         List<String> sensors = new ArrayList<>(Arrays.asList("door1", "door2", "door3", "windows1", "windows2", "windows3"));
         String zoneName = "zone1";
-        final var zoneRef = system.actorOf(Props.create(ZoneActor.class, zoneName), zoneName);
+        final var zoneRef = system.actorOf(Props.create(ZoneActor.class, ui, zoneName), zoneName);
         for (var sensor : sensors) {
             system.actorOf(Props.create(SensorActor.class, zoneRef, sensor), sensor);
         }
-        ActorRef controlUnit = system.actorOf(Props.create(ControlUnitActor.class), "controlUnit");
-        ActorRef ui = system.actorOf(UIActor.props(controlUnit), "ui");
 
         stage.setTitle("Smart Home Alarm");
         stage.setScene(new Scene(new Dashboard(ui), 760, 560));
