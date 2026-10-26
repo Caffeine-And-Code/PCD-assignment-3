@@ -17,7 +17,8 @@ final class AlarmIndicator extends StackPane {
         getChildren().add(indicator);
     }
 
-    public void setStatus(boolean isOnAlarm) {      indicator.setFill(isOnAlarm ? Color.RED : Color.TRANSPARENT);
+    public void setStatus(boolean isOnAlarm) {
+        indicator.setFill(isOnAlarm ? Color.RED : Color.TRANSPARENT);
         indicator.setStroke(isOnAlarm ? Color.RED : Color.rgb(69, 69, 69));
     }
 }

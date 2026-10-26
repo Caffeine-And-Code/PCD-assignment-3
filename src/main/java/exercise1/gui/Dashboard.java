@@ -3,7 +3,10 @@ package exercise1.gui;
 import exercise1.protocols.MessagesProtocol;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.apache.pekko.actor.ActorRef;
@@ -21,7 +24,10 @@ public final class Dashboard extends BorderPane {
         controls.getChildren().add(new KeypadPanel(uiActor));
 
         DelaySettingsPanel delaySettings = new DelaySettingsPanel(uiActor);
+        final var addZoneBtn = createAddZoneBtn(uiActor);
+
         controls.getChildren().add(delaySettings);
+        controls.getChildren().add(addZoneBtn);
         controls.getChildren().add(errorLabel);
 
         setLeft(controls);
@@ -45,5 +51,28 @@ public final class Dashboard extends BorderPane {
                 ),
                 ActorRef.noSender()
         );
+    }
+
+    private static Button createAddZoneBtn(ActorRef uiActor) {
+        final var addZoneBtn = new Button("Add Zone...");
+        addZoneBtn.setPrefSize(200, 25);
+
+        addZoneBtn.setOnAction(event -> {
+            final var dialog = new TextInputDialog();
+            dialog.setTitle("Add Zone");
+            dialog.setHeaderText("Insert the name of the zone");
+            dialog.setContentText("Name:");
+
+            dialog.showAndWait().ifPresent(value -> {
+                final var trimmed = value.trim();
+                if (trimmed.isEmpty()) {
+                    new Alert(Alert.AlertType.WARNING, "The value cannot be empty.").showAndWait();
+                }
+
+                uiActor.tell(new MessagesProtocol.CreateZone(trimmed), ActorRef.noSender());
+            });
+        });
+
+        return addZoneBtn;
     }
 }

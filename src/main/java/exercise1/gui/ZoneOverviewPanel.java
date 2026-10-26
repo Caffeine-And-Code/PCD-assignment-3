@@ -9,9 +9,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.apache.pekko.actor.ActorRef;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ZoneOverviewPanel extends BorderPane {
     private final ObservableMap<String, List<String>> sensorsByZone =
@@ -37,25 +35,14 @@ public final class ZoneOverviewPanel extends BorderPane {
         BorderPane.setMargin(zoneCanvas, new Insets(6, 0, 0, 0));
     }
 
-    /** Sostituisce tutte le zone e i relativi sensori. */
     public void setSensorsByZone(Map<String, List<String>> newMap) {
         sensorsByZone.clear();
         sensorsByZone.putAll(newMap);
-        zoneCanvas.setLabels(List.copyOf(sensorsByZone.keySet()));
+        zoneCanvas.setLabels(List.copyOf(sensorsByZone.keySet().stream().sorted().toList()));
     }
 
     public Label getSystemStateLabel() {
         return systemStateLabel;
-    }
-
-
-    /** Aggiorna i sensori di una singola zona; se la zona è nuova aggiunge anche il tile. */
-    public void updateZoneSensors(String zone, List<String> sensors) {
-        boolean isNewZone = !sensorsByZone.containsKey(zone);
-        sensorsByZone.put(zone, List.copyOf(sensors));
-        if (isNewZone) {
-            zoneCanvas.setLabels(List.copyOf(sensorsByZone.keySet()));
-        }
     }
 
     public void setAlarmActive(boolean active) {

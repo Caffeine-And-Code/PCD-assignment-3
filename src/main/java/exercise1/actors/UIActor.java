@@ -62,6 +62,7 @@ public class UIActor extends AbstractActorWithStash {
                 .match(UpdateExitDelay.class, this::onUpdateExitRequest)
                 .match(GetZonesRequest.class, this::onGetZoneRequest)
                 .match(GetSystemStateRequest.class, this::onGetSystemStateRequest)
+                .match(CreateZone.class, this::onCreateZoneRequest)
                 .build();
     }
 
@@ -132,6 +133,10 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     /** -- Frontend Requests forwarded to ControlUnit -- **/
+
+    private void onCreateZoneRequest(CreateZone createZone) {
+        controlUnit.tell(createZone, this.getSelf());
+    }
 
     private void onUpdateExitRequest(UpdateExitDelay data){
         controlUnit.tell(data, this.getSelf());

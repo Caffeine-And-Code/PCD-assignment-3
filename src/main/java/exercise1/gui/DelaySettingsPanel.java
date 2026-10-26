@@ -41,12 +41,4 @@ final class DelaySettingsPanel extends VBox {
     public DelayControl getEntryDelay() {
         return entryDelay;
     }
-
-    public void setExitDelay(int seconds) {
-        exitDelay.setSeconds(seconds);
-    }
-
-    public void setEntryDelay(int seconds) {
-        entryDelay.setSeconds(seconds);
-    }
 }
