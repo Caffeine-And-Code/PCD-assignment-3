@@ -12,8 +12,11 @@ import java.util.List;
 
 public class ControlUnitActor extends AbstractActorWithStash {
 
-    private record ExitTimeout() {}
-    private record EntryTimeout() {}
+    private record ExitTimeout() {
+    }
+
+    private record EntryTimeout() {
+    }
 
     private final HashMap<String, List<String>> zoneSensors = new HashMap<>();
     private final HashMap<String, Boolean> activeZones = new HashMap<>();
@@ -24,20 +27,20 @@ public class ControlUnitActor extends AbstractActorWithStash {
     private Cancellable entryTimeout;
 
 
-    private void seedSensors(){
+    private void seedSensors() {
         List<String> sensors = new ArrayList<>(Arrays.asList("door1", "door2", "door3", "windows1", "windows2", "windows3"));
         String zoneName = "zone1";
-        for(var sensor: sensors){
-            getContext().actorOf(Props.create(SensorActor.class, sensor));
+        final var zoneRef = getContext().actorOf(Props.create(ZoneActor.class, zoneName));
+        for (var sensor : sensors) {
+            getContext().actorOf(Props.create(SensorActor.class, zoneRef, sensor));
         }
-        getContext().actorOf(Props.create(ZoneActor.class), zoneName);
         zoneSensors.put(zoneName, sensors);
         activeZones.put(zoneName, false);
     }
 
     @Override
-    public void preStart(){
-        seedSensors();
+    public void preStart() {
+        //seedSensors();
     }
 
     @Override
@@ -45,7 +48,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
         return disarmed();
     }
 
-    private Receive disarmed(){
+    private Receive disarmed() {
         //noinspection deprecation
         return defaultBuilder()
                 .match(CreateZone.class, this::OnCreateZone)
@@ -57,21 +60,21 @@ public class ControlUnitActor extends AbstractActorWithStash {
                 .build();
     }
 
-    private Receive exitDelay(){
+    private Receive exitDelay() {
         //noinspection deprecation
         return defaultBuilder()
                 .match(ExitTimeout.class, this::OnExitTimeout)
                 .build();
     }
 
-    private Receive armed(){
+    private Receive armed() {
         //noinspection deprecation
         return defaultBuilder()
                 .match(SensorDetection.class, this::OnSensorDetection)
                 .build();
     }
 
-    private Receive entryDelay(){
+    private Receive entryDelay() {
         //noinspection deprecation
         return defaultBuilder()
                 .match(EntryTimeout.class, this::OnEntryTimeout)
@@ -79,35 +82,35 @@ public class ControlUnitActor extends AbstractActorWithStash {
                 .build();
     }
 
-    private Receive alarm(){
+    private Receive alarm() {
         //noinspection deprecation
         return defaultBuilder()
                 .match(PinEntered.class, this::OnPinEnteredFromArmed)
                 .build();
     }
 
-    private ReceiveBuilder defaultBuilder(){
+    private ReceiveBuilder defaultBuilder() {
         //noinspection deprecation
         return receiveBuilder()
                 .match(GetZonesRequest.class, this::OnGetZonesRequest);
     }
 
-    private ReceiveBuilder stashCRUD(ReceiveBuilder builder){
+    private ReceiveBuilder stashCRUD(ReceiveBuilder builder) {
         return builder
-            .match(CreateZone.class, mag -> stash())
-            .match(DeleteZone.class,  mag -> stash())
-            .match(AssignSensorToZone.class,  mag -> stash())
-            .match(UpdateExitDelay.class,  mag -> stash())
-            .match(UpdateEntryDelay.class,  mag -> stash());
+                .match(CreateZone.class, mag -> stash())
+                .match(DeleteZone.class, mag -> stash())
+                .match(AssignSensorToZone.class, mag -> stash())
+                .match(UpdateExitDelay.class, mag -> stash())
+                .match(UpdateEntryDelay.class, mag -> stash());
     }
 
-    public void OnGetZonesRequest(GetZonesRequest req){
+    public void OnGetZonesRequest(GetZonesRequest req) {
         getSender().tell(new GetZonesReply(zoneSensors), getSelf());
     }
 
-    public void OnCreateZone(CreateZone createZone){
+    public void OnCreateZone(CreateZone createZone) {
         var zoneId = createZone.zoneId().trim();
-        if(!zoneId.isEmpty()){
+        if (!zoneId.isEmpty()) {
             getContext().actorOf(Props.create(ZoneActor.class, zoneId));
             this.zoneSensors.put(zoneId, new ArrayList<>());
             activeZones.put(zoneId, false);
@@ -116,9 +119,9 @@ public class ControlUnitActor extends AbstractActorWithStash {
         sendUpdatedZoneSensors(getSender());
     }
 
-    public void OnDeleteZone (DeleteZone deleteZone){
+    public void OnDeleteZone(DeleteZone deleteZone) {
         var zoneId = deleteZone.zoneId();
-        if(zoneSensors.containsKey(zoneId) && zoneSensors.get(zoneId).isEmpty()){
+        if (zoneSensors.containsKey(zoneId) && zoneSensors.get(zoneId).isEmpty()) {
             zoneSensors.remove(zoneId);
             activeZones.remove(zoneId);
             getContext().findChild(zoneId).ifPresent(zoneRef -> getContext().stop(zoneRef));
@@ -127,12 +130,12 @@ public class ControlUnitActor extends AbstractActorWithStash {
         sendUpdatedZoneSensors(getSender());
     }
 
-    public void OnAssignSensorToZone(AssignSensorToZone assignSensorToZone){
+    public void OnAssignSensorToZone(AssignSensorToZone assignSensorToZone) {
         var zoneId = assignSensorToZone.zoneId();
         var sensorId = assignSensorToZone.sensorId();
-        if(zoneSensors.containsKey(zoneId)){
-            for(var zone: zoneSensors.keySet()){
-                if(zoneSensors.get(zone).contains(sensorId)){
+        if (zoneSensors.containsKey(zoneId)) {
+            for (var zone : zoneSensors.keySet()) {
+                if (zoneSensors.get(zone).contains(sensorId)) {
                     zoneSensors.get(zone).remove(sensorId);
                     zoneSensors.get(zoneId).add(sensorId);
                 }
@@ -142,72 +145,69 @@ public class ControlUnitActor extends AbstractActorWithStash {
         sendUpdatedZoneSensors(getSender());
     }
 
-    public void OnUpdateExitDelay(UpdateExitDelay updateExitDelay){
+    public void OnUpdateExitDelay(UpdateExitDelay updateExitDelay) {
         var seconds = updateExitDelay.seconds();
-        if(seconds >= 0){
+        if (seconds >= 0) {
             exitDelay = seconds;
         }
 
         getSender().tell(new ExitDelayUpdated(exitDelay), getSelf());
     }
 
-    public void OnUpdateEntryDelay(UpdateEntryDelay updateEntryDelay){
+    public void OnUpdateEntryDelay(UpdateEntryDelay updateEntryDelay) {
         var seconds = updateEntryDelay.seconds();
-        if(seconds > 0){
+        if (seconds > 0) {
             entryDelay = seconds;
         }
 
         getSender().tell(new EntryDelayUpdated(entryDelay), getSelf());
     }
 
-    public void OnPinEnteredFromDisarmed(PinEnteredWithZones pinEntered){
+    public void OnPinEnteredFromDisarmed(PinEnteredWithZones pinEntered) {
         var pinAttempt = pinEntered.pin();
-        if(pinAttempt.equals(correctPin)){
-            for (var zoneId : pinEntered.zonesToActive()){
-                if(activeZones.containsKey(zoneId)){
+        if (pinAttempt.equals(correctPin)) {
+            for (var zoneId : pinEntered.zonesToActive()) {
+                if (activeZones.containsKey(zoneId)) {
                     activeZones.put(zoneId, true);
-                }
-                else{
+                } else {
                     activeZones.put(zoneId, false);
                 }
             }
             enterExitDelay();
-        }
-        else{
+        } else {
             getSender().tell(new InvalidPinEntered(), getSelf());
         }
     }
 
-    public void OnPinEnteredFromArmed(PinEntered pinEntered){
+    public void OnPinEnteredFromArmed(PinEntered pinEntered) {
         var pinAttempt = pinEntered.pin();
-        if(pinAttempt.equals(correctPin)){
-            if(entryTimeout != null){
+        if (pinAttempt.equals(correctPin)) {
+            if (entryTimeout != null) {
                 entryTimeout.cancel();
             }
             enterDisarmed();
-        }
-        else{
+        } else {
             getSender().tell(new InvalidPinEntered(), getSelf());
         }
     }
 
-    public void OnSensorDetection(SensorDetection sensorDetection){
+    public void OnSensorDetection(SensorDetection sensorDetection) {
         enterEntryDelay();
     }
 
-    public void OnExitTimeout(ExitTimeout exitTimeout){
+    public void OnExitTimeout(ExitTimeout exitTimeout) {
         enterArmed();
     }
 
-    public void OnEntryTimeout(EntryTimeout entryTimeout){
+    public void OnEntryTimeout(EntryTimeout entryTimeout) {
         enterAlarm();
     }
 
-    private void sendUpdatedZoneSensors(ActorRef to){
+    private void sendUpdatedZoneSensors(ActorRef to) {
         to.tell(new UpdatedZoneSensors(zoneSensors), getSelf());
     }
 
-    private void enterExitDelay(){
+    private void enterExitDelay() {
         getContext().become(exitDelay());
 
         getContext().getSystem().getScheduler().scheduleOnce(
@@ -218,17 +218,16 @@ public class ControlUnitActor extends AbstractActorWithStash {
                 getSelf()
         );
 
-        for(var zoneId : activeZones.keySet()){
-            if(activeZones.get(zoneId) == true){
+        for (var zoneId : activeZones.keySet()) {
+            if (activeZones.get(zoneId) == true) {
                 getContext().findChild(zoneId).ifPresent(ref -> ref.tell(new ActiveZone(), getSelf()));
-            }
-            else{
+            } else {
                 getContext().findChild(zoneId).ifPresent(ref -> ref.tell(new DeactiveZone(), getSelf()));
             }
         }
     }
 
-    private void enterEntryDelay(){
+    private void enterEntryDelay() {
         getContext().become(entryDelay());
 
         entryTimeout = getContext().getSystem().getScheduler().scheduleOnce(
@@ -240,15 +239,15 @@ public class ControlUnitActor extends AbstractActorWithStash {
         );
     }
 
-    private void enterArmed(){
+    private void enterArmed() {
         getContext().become(armed());
     }
 
-    private void enterAlarm(){
+    private void enterAlarm() {
         getContext().become(alarm());
     }
 
-    private void enterDisarmed(){
+    private void enterDisarmed() {
         getContext().become(disarmed());
 
         unstashAll();

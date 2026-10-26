@@ -6,9 +6,11 @@ import org.apache.pekko.actor.ActorRef;
 
 public class SensorActor extends AbstractActor {
     public ActorRef zoneRef;
+    private String identifier;
 
-    public SensorActor(ActorRef zoneRef){
+    public SensorActor(ActorRef zoneRef, String identifier){
         this.zoneRef = zoneRef;
+        this.identifier = identifier;
     }
 
     @Override

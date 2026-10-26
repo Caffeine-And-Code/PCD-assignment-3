@@ -1,8 +1,10 @@
 package exercise1.actors;
 
+import exercise1.gui.DelayControl;
 import exercise1.protocols.MessagesProtocol.*;
 import javafx.application.Platform;
 import org.apache.pekko.actor.AbstractActorWithStash;
+import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Props;
 
 import javax.swing.*;
@@ -10,14 +12,19 @@ import javax.swing.*;
 public class UIActor extends AbstractActorWithStash {
     private static final int PIN_LENGHT = 5;
 
-    private JLabel entryDelayRef;
-    private JLabel exitDelayRef;
-    private String currentPin;
+    private final ActorRef controlUnit;
+
+    private DelayControl entryDelayRef;
+    private DelayControl exitDelayRef;
+    private String currentPin = "";
     // TODO: zoneCanvasRef, alarmRef
 
-    public static Props props() {
-        //noinspection deprecation
-        return Props.create(UIActor.class, UIActor::new);
+    public static Props props(ActorRef controlUnit) {
+        return Props.create(UIActor.class, () -> new UIActor(controlUnit));
+    }
+
+    private UIActor(ActorRef controlUnit) {
+        this.controlUnit = controlUnit;
     }
 
     @Override
@@ -43,6 +50,8 @@ public class UIActor extends AbstractActorWithStash {
                 .match(AlarmActiveUpdate.class, this::handleAlarmActiveUpdate)
                 // "frontend" messages
                 .match(EnterPinDigit.class, this::handleEnterPinDigit)
+                .match(UpdateEntryDelay.class, this::onUpdateEntryRequest)
+                .match(UpdateExitDelay.class, this::onUpdateExitRequest)
                 .build();
     }
 
@@ -62,11 +71,11 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     private void handleExitDelayUpdated(ExitDelayUpdated data) {
-        Platform.runLater(() -> exitDelayRef.setText(String.valueOf(data.seconds())));
+        Platform.runLater(() -> exitDelayRef.setSeconds(data.seconds()));
     }
 
     private void handleEntryDelayUpdated(EntryDelayUpdated data) {
-        Platform.runLater(() -> entryDelayRef.setText(String.valueOf(data.seconds())));
+        Platform.runLater(() -> entryDelayRef.setSeconds(data.seconds()));
     }
 
     private void handleInvalidPinEntered(InvalidPinEntered data) {
@@ -91,6 +100,14 @@ public class UIActor extends AbstractActorWithStash {
         Platform.runLater(() -> {
             // aggiorna l'indicatore dell'allarme
         });
+    }
+
+    private void onUpdateExitRequest(UpdateExitDelay data){
+        controlUnit.tell(data, this.getSelf());
+    }
+
+    private void onUpdateEntryRequest(UpdateEntryDelay data){
+        controlUnit.tell(data, this.getSelf());
     }
 
     private void handleEnterPinDigit(EnterPinDigit data) {

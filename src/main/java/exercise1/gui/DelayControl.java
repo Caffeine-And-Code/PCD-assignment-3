@@ -1,19 +1,24 @@
 package exercise1.gui;
 
+import org.apache.pekko.actor.ActorRef;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
-final class DelayControl extends JPanel {
+public final class DelayControl extends JPanel {
     private int seconds;
     private final int upperLimit;
     private final int lowerLimit;
     private final JLabel value;
 
-    DelayControl(
+    public DelayControl(
             String name,
             int seconds,
             int upperLimit,
-            int lowerLimit) {
+            int lowerLimit,
+            Consumer<Integer> onNewValue
+    ) {
         this.seconds = seconds;
         this.upperLimit = upperLimit;
         this.lowerLimit = lowerLimit;
@@ -31,8 +36,8 @@ final class DelayControl extends JPanel {
             button.setMargin(new Insets(0, 0, 0, 0));
             button.setFocusPainted(false);
         }
-        decrease.addActionListener(event -> setSeconds(this.seconds - 1));
-        increase.addActionListener(event -> setSeconds(this.seconds + 1));
+        decrease.addActionListener(event -> onNewValue.accept(seconds - 1));
+        increase.addActionListener(event -> onNewValue.accept(this.seconds + 1));
 
         this.value.setPreferredSize(new Dimension(50, 30));
         JPanel stepper = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
