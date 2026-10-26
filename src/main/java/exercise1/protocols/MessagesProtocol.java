@@ -2,6 +2,7 @@ package exercise1.protocols;
 
 import org.apache.pekko.actor.ActorRef;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 
@@ -33,4 +34,11 @@ public abstract class MessagesProtocol {
     public static record UpdatedZoneSensors(Map<String, List<String>> zoneSensors){}
     public static record AlarmActiveUpdate(Boolean alarmActive){}
 
+    // From UI to UIActor
+    public static record EnterPinDigit(int digit){}
+    public static record BindUi(JLabel entryDelayLabel, JLabel exitDelayLabel){}
+    // update entry delay
+    // update exit delay
+    // assign sensor to zone
+    // sensor detection
 }
