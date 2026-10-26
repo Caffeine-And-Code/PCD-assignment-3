@@ -1,7 +1,5 @@
 package exercise1.protocols;
 
-import org.apache.pekko.actor.ActorRef;
-
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +19,8 @@ public abstract class MessagesProtocol {
     public static record AssignSensorToZone(String zoneId, String sensorId){} //controlUnit
     public static record UpdateExitDelay(int seconds){} //controlUnit
     public static record UpdateEntryDelay(int seconds){} //controlUnit
-    public static record PinEntered(String pin, List<String> zonesToActive){} //controlUnit
+    public static record PinEnteredWithZones(String pin, List<String> zonesToActive){} //controlUnit
+    public static record PinEntered(String pin){} //controlUnit
     public static record SensorDetection(){} //actorSelection("/controlUnit/{sensorId}")
 
     // To UI from actors
