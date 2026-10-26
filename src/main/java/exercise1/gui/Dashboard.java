@@ -39,9 +39,8 @@ public final class Dashboard extends BorderPane {
                 new MessagesProtocol.BindUi(
                         delaySettings.getEntryDelay(),
                         delaySettings.getExitDelay(),
-                        zoneOverview.getZoneCanvas(),
-                        errorLabel,
-                        zoneOverview.getSystemStateLabel()
+                        zoneOverview,
+                        errorLabel
                 ),
                 ActorRef.noSender()
         );

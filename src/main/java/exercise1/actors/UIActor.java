@@ -1,7 +1,7 @@
 package exercise1.actors;
 
 import exercise1.gui.DelayControl;
-import exercise1.gui.ZoneCanvas;
+import exercise1.gui.ZoneOverviewPanel;
 import exercise1.protocols.MessagesProtocol.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -18,7 +18,7 @@ public class UIActor extends AbstractActorWithStash {
 
     private DelayControl entryDelayRef;
     private DelayControl exitDelayRef;
-    private ZoneCanvas zoneCanvas;
+    private ZoneOverviewPanel zoneCanvas;
     private Label errorLabel;
     private Label systemStateLabel;
     private String currentPin = "";
@@ -89,7 +89,7 @@ public class UIActor extends AbstractActorWithStash {
     /** -- Responses from the Backend -- **/
 
     private void handleGetZoneReply(GetZonesReply data) {
-        Platform.runLater(() -> this.zoneCanvas.setLabels(data.zoneSensors().keySet().stream().toList()));
+        Platform.runLater(() -> this.zoneCanvas.setSensorsByZone(data.zoneSensors()));
     }
 
     private void handleExitDelayUpdated(ExitDelayUpdated data) {

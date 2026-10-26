@@ -3,6 +3,7 @@ package exercise1.gui;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -14,7 +15,7 @@ import javafx.scene.paint.Color;
 import java.util.List;
 import java.util.Random;
 
-public class ZoneCanvas extends TilePane {
+final class ZoneCanvas extends TilePane {
     private static final int TILE_WIDTH = 120;
     private static final int TILE_HEIGHT = 90;
     private static final int PADDING = 3;
@@ -25,7 +26,7 @@ public class ZoneCanvas extends TilePane {
             new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ZonePopupMenu menu;
 
-    public ZoneCanvas(List<String> initialLabels, ZonePopupMenu menu) {
+    ZoneCanvas(List<String> initialLabels, ZonePopupMenu menu) {
         this.menu = menu;
 
         setPadding(new Insets(PADDING));
@@ -42,15 +43,26 @@ public class ZoneCanvas extends TilePane {
             }
         });
 
-        labels.addListener((javafx.collections.ListChangeListener<String>) change -> rebuildTiles());
-        labels.addListener((obs, oldList, newList) -> rebuildTiles());
+        labels.addListener((ListChangeListener<String>) change -> rebuildTiles());
 
         setLabels(initialLabels);
     }
 
-    public void setLabels(List<String> newLabels) {
-        labels.setAll(newLabels);
+    // --- API ---
+
+    void setLabels(List<String> newLabels) {
+        labels.setAll(newLabels); // un solo evento di change
     }
+
+    List<String> getLabels() {
+        return labels.get();
+    }
+
+    ListProperty<String> labelsProperty() {
+        return labels;
+    }
+
+    // --- interno ---
 
     private void rebuildTiles() {
         getChildren().clear();
