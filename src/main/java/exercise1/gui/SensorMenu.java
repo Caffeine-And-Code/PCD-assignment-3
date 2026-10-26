@@ -1,31 +1,23 @@
 package exercise1.gui;
 
-import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+
 import java.util.List;
 
-final class SensorMenu extends JMenu {
+final class SensorMenu extends Menu {
     SensorMenu(String sensorName, String currentZone, List<String> zones) {
         super(sensorName);
-
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if (SwingUtilities.isLeftMouseButton(event)) {
-                    sendSignal(sensorName);
-                }
-            }
-        });
+        setOnShowing(event -> sendSignal(sensorName));
 
         for (String destinationZone : zones) {
-            JMenuItem destination = new JMenuItem(destinationZone);
-            destination.setEnabled(!destinationZone.equals(currentZone));
-            destination.addActionListener(event -> System.out.println(
+            MenuItem destination = new MenuItem(destinationZone);
+            destination.setDisable(destinationZone.equals(currentZone));
+            destination.setOnAction(event -> System.out.println(
                     "Spostato sensore '" + sensorName + "' da '" + currentZone
                             + "' a '" + destinationZone + "' (mock)"
             ));
-            add(destination);
+            getItems().add(destination);
         }
     }
 

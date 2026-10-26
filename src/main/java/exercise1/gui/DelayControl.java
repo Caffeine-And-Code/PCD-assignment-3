@@ -1,59 +1,52 @@
 package exercise1.gui;
 
-import org.apache.pekko.actor.ActorRef;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.function.Consumer;
 
-public final class DelayControl extends JPanel {
+public final class DelayControl extends VBox {
     private int seconds;
-    private final int upperLimit;
-    private final int lowerLimit;
-    private final JLabel value;
+    private final Label value;
 
     public DelayControl(
             String name,
             int seconds,
-            int upperLimit,
-            int lowerLimit,
             Consumer<Integer> onNewValue
     ) {
+        super(4);
         this.seconds = seconds;
-        this.upperLimit = upperLimit;
-        this.lowerLimit = lowerLimit;
+        setAlignment(Pos.CENTER);
 
-        setLayout(new BorderLayout(0, 4));
-        setBackground(Color.WHITE);
+        Label title = new Label(name);
+        value = new Label(seconds + " s");
+        value.setAlignment(Pos.CENTER);
+        value.setMinSize(50, 30);
+        value.setPrefSize(50, 30);
 
-        JLabel title = new JLabel(name, SwingConstants.CENTER);
-        this.value = new JLabel(this.seconds + " s", SwingConstants.CENTER);
-
-        JButton decrease = new JButton("-");
-        JButton increase = new JButton("+");
-        for (JButton button : new JButton[]{decrease, increase}) {
-            button.setPreferredSize(new Dimension(30, 30));
-            button.setMargin(new Insets(0, 0, 0, 0));
-            button.setFocusPainted(false);
+        Button decrease = new Button("-");
+        Button increase = new Button("+");
+        for (Button button : new Button[]{decrease, increase}) {
+            button.setMinSize(30, 30);
+            button.setPrefSize(30, 30);
+            button.setMaxSize(30, 30);
+            button.setFocusTraversable(false);
+            button.setStyle("-fx-padding: 0; -fx-font-size: 14px;");
         }
-        decrease.addActionListener(event -> onNewValue.accept(seconds - 1));
-        increase.addActionListener(event -> onNewValue.accept(this.seconds + 1));
 
-        this.value.setPreferredSize(new Dimension(50, 30));
-        JPanel stepper = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
-        stepper.setBackground(Color.WHITE);
-        stepper.add(decrease);
-        stepper.add(value);
-        stepper.add(increase);
+        decrease.setOnAction(event -> onNewValue.accept(this.seconds - 1));
+        increase.setOnAction(event -> onNewValue.accept(this.seconds + 1));
 
-        add(title, BorderLayout.NORTH);
-        add(stepper, BorderLayout.CENTER);
+        HBox stepper = new HBox(2, decrease, value, increase);
+        stepper.setAlignment(Pos.CENTER);
+        getChildren().addAll(title, stepper);
     }
 
     public void setSeconds(int seconds) {
-        if (seconds >= this.lowerLimit && seconds <= this.upperLimit) {
-            this.seconds = seconds;
-            this.value.setText(this.seconds + " s");
-        }
+        this.seconds = seconds;
+        value.setText(seconds + " s");
     }
 }

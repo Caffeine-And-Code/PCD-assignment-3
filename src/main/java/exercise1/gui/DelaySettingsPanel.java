@@ -1,13 +1,11 @@
 package exercise1.gui;
 
 import exercise1.protocols.MessagesProtocol;
+import javafx.geometry.Insets;
+import javafx.scene.layout.VBox;
 import org.apache.pekko.actor.ActorRef;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
-
-final class DelaySettingsPanel extends JPanel {
+final class DelaySettingsPanel extends VBox {
     private static final int EXIT_UPPER_LIMIT = 60;
     private static final int EXIT_LOWER_LIMIT = 20;
     private static final int ENTRY_UPPER_LIMIT = 30;
@@ -17,32 +15,23 @@ final class DelaySettingsPanel extends JPanel {
     private final DelayControl entryDelay;
 
     DelaySettingsPanel(ActorRef uiActor) {
-        setLayout(new GridLayout(2, 1, 0, 12));
-        setBackground(Color.WHITE);
-        setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Color.GRAY, 1, true),
-                BorderFactory.createEmptyBorder(10, 8, 10, 8)
-        ));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+        super(12);
+        setPadding(new Insets(10, 8, 10, 8));
+        setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
-        this.exitDelay = new DelayControl(
+        exitDelay = new DelayControl(
                 "ExitDelay (" + EXIT_LOWER_LIMIT + "-" + EXIT_UPPER_LIMIT + ")",
                 30,
-                EXIT_UPPER_LIMIT,
-                EXIT_LOWER_LIMIT,
-                (newValue) -> uiActor.tell(new MessagesProtocol.UpdateExitDelay(newValue), ActorRef.noSender())
+                newValue -> uiActor.tell(new MessagesProtocol.UpdateExitDelay(newValue), ActorRef.noSender())
         );
 
-        this.entryDelay = new DelayControl(
+        entryDelay = new DelayControl(
                 "EntryDelay (" + ENTRY_LOWER_LIMIT + "-" + ENTRY_UPPER_LIMIT + ")",
                 30,
-                ENTRY_UPPER_LIMIT,
-                ENTRY_LOWER_LIMIT,
-                (newValue) -> uiActor.tell(new MessagesProtocol.UpdateEntryDelay(newValue), ActorRef.noSender())
+                newValue -> uiActor.tell(new MessagesProtocol.UpdateEntryDelay(newValue), ActorRef.noSender())
         );
 
-        add(exitDelay);
-        add(entryDelay);
+        getChildren().addAll(exitDelay, entryDelay);
     }
 
     public DelayControl getExitDelay() {
@@ -54,10 +43,10 @@ final class DelaySettingsPanel extends JPanel {
     }
 
     public void setExitDelay(int seconds) {
-        this.exitDelay.setSeconds(seconds);
+        exitDelay.setSeconds(seconds);
     }
 
     public void setEntryDelay(int seconds) {
-        this.entryDelay.setSeconds(seconds);
+        entryDelay.setSeconds(seconds);
     }
 }

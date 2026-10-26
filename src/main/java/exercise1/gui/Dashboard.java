@@ -1,41 +1,31 @@
 package exercise1.gui;
 
 import exercise1.protocols.MessagesProtocol;
+import javafx.geometry.Insets;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import org.apache.pekko.actor.ActorRef;
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+
 import java.util.Map;
 
-public final class Dashboard extends JFrame {
+public final class Dashboard extends BorderPane {
     public Dashboard(ActorRef uiActor) {
-        super("Smart Home Alarm");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        VBox controls = new VBox(10);
+        controls.setPrefWidth(200);
+        controls.getChildren().add(new KeypadPanel());
 
-        JPanel controls = new JPanel();
-        controls.setOpaque(false);
-        controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
-        controls.setPreferredSize(new Dimension(200, 0));
-        controls.add(new KeypadPanel());
-        controls.add(Box.createRigidArea(new Dimension(0, 10)));
-        final var delayLayout = new DelaySettingsPanel(uiActor);
-        controls.add(delayLayout);
-        controls.add(Box.createVerticalGlue());
+        DelaySettingsPanel delaySettings = new DelaySettingsPanel(uiActor);
+        controls.getChildren().add(delaySettings);
 
-        JPanel content = new JPanel(new BorderLayout(10, 0));
-        content.setBackground(Color.WHITE);
-        content.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Color.GRAY, 1, true),
-                new EmptyBorder(10, 10, 10, 10)
-        ));
-        content.add(controls, BorderLayout.WEST);
-        content.add(new ZoneOverviewPanel(Map.of()), BorderLayout.CENTER);
+        setLeft(controls);
+        setCenter(new ZoneOverviewPanel(Map.of()));
+        BorderPane.setMargin(getCenter(), new Insets(0, 0, 0, 10));
+        setPadding(new Insets(10));
+        setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
-        setContentPane(content);
-        setMinimumSize(new Dimension(650, 470));
-        setSize(760, 560);
-        setLocationRelativeTo(null);
-        uiActor.tell(new MessagesProtocol.BindUi(delayLayout.getEntryDelay(), delayLayout.getExitDelay()), ActorRef.noSender());
+        uiActor.tell(
+                new MessagesProtocol.BindUi(delaySettings.getEntryDelay(), delaySettings.getExitDelay()),
+                ActorRef.noSender()
+        );
     }
 }

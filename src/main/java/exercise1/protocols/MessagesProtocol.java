@@ -3,7 +3,6 @@ package exercise1.protocols;
 import exercise1.gui.DelayControl;
 
 import java.util.List;
-import javax.swing.*;
 import java.util.Map;
 
 public abstract class MessagesProtocol {

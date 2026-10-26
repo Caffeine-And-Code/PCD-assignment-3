@@ -1,30 +1,28 @@
 package exercise1.gui;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+
 import java.util.List;
 import java.util.Map;
 
-final class ZoneOverviewPanel extends JPanel {
+final class ZoneOverviewPanel extends BorderPane {
     ZoneOverviewPanel(Map<String, List<String>> sensorsByZone) {
-        setLayout(new BorderLayout(0, 6));
-        setBackground(Color.WHITE);
-        setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Color.GRAY, 1, true),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)
-        ));
+        setPadding(new Insets(8));
+        setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
-        JPanel alarm = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        alarm.setBackground(Color.WHITE);
-        alarm.add(new JLabel("Alarm"));
         AlarmIndicator alarmIndicator = new AlarmIndicator();
-        alarm.add(alarmIndicator);
+        HBox alarm = new HBox(6, new Label("Alarm"), alarmIndicator);
+        alarm.setAlignment(Pos.CENTER_RIGHT);
 
         ZonePopupMenu popupMenu = new ZonePopupMenu(sensorsByZone);
         ZoneCanvas zoneCanvas = new ZoneCanvas(sensorsByZone.keySet().stream().toList(), popupMenu);
 
-        add(alarm, BorderLayout.NORTH);
-        add(zoneCanvas, BorderLayout.CENTER);
+        setTop(alarm);
+        setCenter(zoneCanvas);
+        BorderPane.setMargin(zoneCanvas, new Insets(6, 0, 0, 0));
     }
 }

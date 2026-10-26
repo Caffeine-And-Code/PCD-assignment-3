@@ -1,33 +1,24 @@
 package exercise1.gui;
 
-import javax.swing.*;
-import java.awt.*;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
-final class AlarmIndicator extends JComponent {
-    private boolean isOnAlarm;
+final class AlarmIndicator extends StackPane {
+    private final Circle indicator = new Circle(10);
 
     AlarmIndicator() {
-        setPreferredSize(new Dimension(26, 26));
-        setToolTipText("Alarm indicator");
-        this.isOnAlarm = false;
-    }
-
-    @Override
-    protected void paintComponent(Graphics graphics) {
-        Graphics2D graphics2D = (Graphics2D) graphics.create();
-        graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        if(this.isOnAlarm) {
-            graphics2D.setColor(new Color(255, 0,0));
-            graphics2D.fillOval(3, 3, 19, 19);
-        } else {
-            graphics2D.setColor(new Color(69, 69, 69));
-            graphics2D.drawOval(3, 3, 19, 19);
-        }
-        graphics2D.dispose();
+        setMinSize(26, 26);
+        setPrefSize(26, 26);
+        setMaxSize(26, 26);
+        Tooltip.install(this, new Tooltip("Alarm indicator"));
+        setStatus(false);
+        getChildren().add(indicator);
     }
 
     public void setStatus(boolean isOnAlarm) {
-        this.isOnAlarm = isOnAlarm;
-        this.repaint();
+        indicator.setFill(isOnAlarm ? Color.RED : Color.TRANSPARENT);
+        indicator.setStroke(isOnAlarm ? Color.RED : Color.rgb(69, 69, 69));
     }
 }

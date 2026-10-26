@@ -1,53 +1,50 @@
 package exercise1.gui;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 
-final class KeypadPanel extends JPanel {
+final class KeypadPanel extends VBox {
     private static final int MAX_DIGITS_NUMBER = 5;
 
-    private String enteredDigits;
-    private final JLabel display;
+    private String enteredDigits = "";
+    private final Label display = new Label();
 
     KeypadPanel() {
+        super(8);
+        setPadding(new Insets(8));
+        setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
-        this.enteredDigits = "";
+        display.setAlignment(Pos.CENTER);
+        display.setMaxWidth(Double.MAX_VALUE);
+        display.setMinHeight(34);
+        display.setStyle("-fx-border-color: gray; -fx-border-radius: 6;");
 
-        setLayout(new BorderLayout(0, 8));
-        setBackground(Color.WHITE);
-        setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Color.GRAY, 1, true),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)
-        ));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
-
-        this.display = new JLabel("", SwingConstants.CENTER);
-        this.display.setPreferredSize(new Dimension(0, 34));
-        this.display.setBorder(new LineBorder(Color.GRAY, 1, true));
-
-        JPanel keys = new JPanel(new GridLayout(3, 3, 6, 6));
-        keys.setBackground(Color.WHITE);
+        GridPane keys = new GridPane();
+        keys.setHgap(6);
+        keys.setVgap(6);
+        keys.setAlignment(Pos.CENTER);
 
         for (int value = 1; value <= 9; value++) {
             int digit = value;
-            JButton key = new JButton(Integer.toString(digit));
-            key.setFocusPainted(false);
-            key.addActionListener(event -> pinButtonPressed(digit));
-            keys.add(key);
+            Button key = new Button(Integer.toString(digit));
+            key.setPrefSize(48, 36);
+            key.setMaxWidth(Double.MAX_VALUE);
+            key.setFocusTraversable(false);
+            key.setOnAction(event -> pinButtonPressed(digit));
+            keys.add(key, (value - 1) % 3, (value - 1) / 3);
         }
 
-        add(display, BorderLayout.NORTH);
-        add(keys, BorderLayout.CENTER);
+        getChildren().addAll(display, keys);
     }
 
     private void pinButtonPressed(int digit) {
-        this.enteredDigits += digit;
-
-
-
+        enteredDigits += digit;
         if (enteredDigits.length() >= MAX_DIGITS_NUMBER) {
-            this.enteredDigits = "";
+            enteredDigits = "";
         }
         display.setText("*".repeat(enteredDigits.length()));
     }

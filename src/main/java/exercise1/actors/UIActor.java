@@ -7,8 +7,6 @@ import org.apache.pekko.actor.AbstractActorWithStash;
 import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Props;
 
-import javax.swing.*;
-
 public class UIActor extends AbstractActorWithStash {
     private static final int PIN_LENGHT = 5;
 

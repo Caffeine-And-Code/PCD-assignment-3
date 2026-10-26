@@ -1,96 +1,71 @@
 package exercise1.gui;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.TilePane;
+import javafx.scene.paint.Color;
+
 import java.util.List;
 import java.util.Random;
 
-public class ZoneCanvas extends JPanel {
-    /** Layout **/
+public class ZoneCanvas extends TilePane {
     private static final int TILE_WIDTH = 120;
     private static final int TILE_HEIGHT = 90;
     private static final int PADDING = 3;
-    private static final int CELL_WIDTH = TILE_WIDTH + PADDING;
-    private static final int CELL_HEIGHT = TILE_HEIGHT + PADDING;
-    /** Colors **/
-    private static final float SATURATION = 0.25f;
-    private static final float BRIGHTNESS = 0.95f;
+    private static final double SATURATION = 0.25;
+    private static final double BRIGHTNESS = 0.95;
 
-    private record Tile(String label, Color color) {
-        static Tile of(String label) {
-            float hue = new Random(label.hashCode()).nextFloat();
+    public ZoneCanvas(List<String> labels, ZonePopupMenu menu) {
+        setPadding(new Insets(PADDING));
+        setHgap(PADDING);
+        setVgap(PADDING);
+        setPrefTileWidth(TILE_WIDTH);
+        setPrefTileHeight(TILE_HEIGHT);
+        setTileAlignment(Pos.CENTER);
+        setStyle("-fx-background-color: white;");
 
-            return new Tile(label, Color.getHSBColor(hue, SATURATION, BRIGHTNESS));
+        for (String label : labels) {
+            StackPane tile = createTile(label);
+            tile.setOnMouseClicked(event -> {
+                if (event.getButton() == MouseButton.SECONDARY) {
+                    menu.showFor(tile, event.getScreenX(), event.getScreenY(), label);
+                    event.consume();
+                }
+            });
+            getChildren().add(tile);
         }
-    }
 
-    private final List<Tile> tiles;
-
-    public ZoneCanvas(List<String> labels, JPopupMenu menu) {
-        this.tiles = labels.stream().map(Tile::of).toList();
-        setBackground(Color.WHITE);
-
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // right-click on a rectangle shows the menu, anywhere else hides it
-                if (!SwingUtilities.isRightMouseButton(e)) {
-                    return;
-                }
-
-                if (indexAt(e.getPoint()) >= 0) {
-                    menu.show(ZoneCanvas.this, e.getX(), e.getY());
-                } else {
-                    menu.setVisible(false);
-                }
+        setOnMousePressed(event -> {
+            if (event.getButton() != MouseButton.SECONDARY) {
+                menu.hide();
             }
         });
     }
 
-    private int getAvailableColumns() {
-        return Math.max(1, (getWidth() - PADDING) / CELL_WIDTH);
+    private StackPane createTile(String label) {
+        double hue = new Random(label.hashCode()).nextDouble() * 360;
+        Color color = Color.hsb(hue, SATURATION, BRIGHTNESS);
+
+        StackPane tile = new StackPane(new Label(label));
+        tile.setMinSize(TILE_WIDTH, TILE_HEIGHT);
+        tile.setPrefSize(TILE_WIDTH, TILE_HEIGHT);
+        tile.setMaxSize(TILE_WIDTH, TILE_HEIGHT);
+        tile.setStyle(
+                "-fx-background-color: " + toHex(color) + ";"
+                        + "-fx-border-color: #454545;"
+        );
+        return tile;
     }
 
-    private Rectangle boundsOf(int index) {
-        int cols = getAvailableColumns();
-        int x = PADDING + (index % cols) * CELL_WIDTH;
-        int y = PADDING + (index / cols) * CELL_HEIGHT;
-
-        return new Rectangle(x, y, TILE_WIDTH, TILE_HEIGHT);
-    }
-
-    private int indexAt(Point p) {
-        for (int i = 0; i < tiles.size(); i++) {
-            if (boundsOf(i).contains(p)) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        FontMetrics fm = g2.getFontMetrics();
-
-        for (int i = 0; i < tiles.size(); i++) {
-            Rectangle r = boundsOf(i);
-            Tile tile = tiles.get(i);
-
-            g2.setColor(tile.color());
-            g2.fill(r);
-            g2.setColor(Color.DARK_GRAY);
-            g2.draw(r);
-
-            int tx = r.x + (r.width - fm.stringWidth(tile.label())) / 2;
-            int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
-            g2.drawString(tile.label(), tx, ty);
-        }
-        g2.dispose();
+    private String toHex(Color color) {
+        return String.format(
+                "#%02X%02X%02X",
+                Math.round(color.getRed() * 255),
+                Math.round(color.getGreen() * 255),
+                Math.round(color.getBlue() * 255)
+        );
     }
 }
