@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 
 final class DelayControl extends JPanel {
-    private final String name;
     private int seconds;
     private final int upperLimit;
     private final int lowerLimit;
@@ -15,7 +14,6 @@ final class DelayControl extends JPanel {
             int seconds,
             int upperLimit,
             int lowerLimit) {
-        this.name = name;
         this.seconds = seconds;
         this.upperLimit = upperLimit;
         this.lowerLimit = lowerLimit;
@@ -27,15 +25,13 @@ final class DelayControl extends JPanel {
         this.value = new JLabel(this.seconds + " s", SwingConstants.CENTER);
 
         JButton decrease = new JButton("-");
+        decrease.setPreferredSize(new Dimension(20, decrease.getPreferredSize().height));
         JButton increase = new JButton("+");
+        increase.setPreferredSize(new Dimension(20, increase.getPreferredSize().height));
         decrease.setFocusPainted(false);
         increase.setFocusPainted(false);
-        decrease.addActionListener(event -> {
-            setSeconds(this.seconds - 1);
-        });
-        increase.addActionListener(event -> {
-            setSeconds(this.seconds + 1);
-        });
+        decrease.addActionListener(event -> setSeconds(this.seconds - 1));
+        increase.addActionListener(event -> setSeconds(this.seconds + 1));
 
         JPanel stepper = new JPanel(new BorderLayout(5, 0));
         stepper.setBackground(Color.WHITE);

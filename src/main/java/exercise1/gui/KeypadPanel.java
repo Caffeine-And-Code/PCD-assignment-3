@@ -5,9 +5,9 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 
 final class KeypadPanel extends JPanel {
+    private static final int MAX_DIGITS_NUMBER = 5;
 
     private String enteredDigits;
-    private final int MAX_DIGITS_NUMBER = 5;
     private final JLabel display;
 
     KeypadPanel() {
@@ -46,7 +46,7 @@ final class KeypadPanel extends JPanel {
 
 
 
-        if (enteredDigits.length() >= this.MAX_DIGITS_NUMBER) {
+        if (enteredDigits.length() >= MAX_DIGITS_NUMBER) {
             this.enteredDigits = "";
         }
         display.setText("*".repeat(enteredDigits.length()));
