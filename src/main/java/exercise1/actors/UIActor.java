@@ -2,10 +2,15 @@ package exercise1.actors;
 
 import exercise1.gui.DelayControl;
 import exercise1.protocols.MessagesProtocol.*;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.scene.control.Label;
+import javafx.util.Duration;
 import org.apache.pekko.actor.AbstractActorWithStash;
 import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Props;
+
+import java.util.ArrayList;
 
 public class UIActor extends AbstractActorWithStash {
     private static final int PIN_LENGHT = 5;
@@ -14,6 +19,7 @@ public class UIActor extends AbstractActorWithStash {
 
     private DelayControl entryDelayRef;
     private DelayControl exitDelayRef;
+    private Label errorLabel;
     private String currentPin = "";
     // TODO: zoneCanvasRef, alarmRef
 
@@ -56,6 +62,7 @@ public class UIActor extends AbstractActorWithStash {
     private void handleBindUi(BindUi ui) {
         this.entryDelayRef = ui.entryDelayLabel();
         this.exitDelayRef = ui.exitDelayLabel();
+        this.errorLabel = ui.errorLabel();
 
         // now process the stashed messages
         getContext().become(ready());
@@ -78,7 +85,10 @@ public class UIActor extends AbstractActorWithStash {
 
     private void handleInvalidPinEntered(InvalidPinEntered data) {
         Platform.runLater(() -> {
-            // mostra l'errore del PIN
+            this.errorLabel.setText("Invalid Pin Provided");
+            PauseTransition pause = new PauseTransition(Duration.seconds(3));
+            pause.setOnFinished(e -> errorLabel.setText(""));
+            pause.play();
         });
     }
 
@@ -116,7 +126,7 @@ public class UIActor extends AbstractActorWithStash {
         currentPin += data.digit();
 
         if (currentPin.length() >= PIN_LENGHT) {
-            // send PinEntered message
+            controlUnit.tell(new PinEnteredWithZones(currentPin, new ArrayList<>()), this.getSelf());
 
             currentPin = "";
         }

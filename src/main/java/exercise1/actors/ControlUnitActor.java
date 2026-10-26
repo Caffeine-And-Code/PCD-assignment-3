@@ -22,26 +22,9 @@ public class ControlUnitActor extends AbstractActorWithStash {
     private final HashMap<String, Boolean> activeZones = new HashMap<>();
     private int exitDelay = 30; //seconds
     private int entryDelay = 30; //seconds
-    private String correctPin = "12345";
+    private final String correctPin = "12345";
 
     private Cancellable entryTimeout;
-
-
-    private void seedSensors() {
-        List<String> sensors = new ArrayList<>(Arrays.asList("door1", "door2", "door3", "windows1", "windows2", "windows3"));
-        String zoneName = "zone1";
-        final var zoneRef = getContext().actorOf(Props.create(ZoneActor.class, zoneName));
-        for (var sensor : sensors) {
-            getContext().actorOf(Props.create(SensorActor.class, zoneRef, sensor));
-        }
-        zoneSensors.put(zoneName, sensors);
-        activeZones.put(zoneName, false);
-    }
-
-    @Override
-    public void preStart() {
-        //seedSensors();
-    }
 
     @Override
     public Receive createReceive() {
@@ -147,7 +130,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     public void OnUpdateExitDelay(UpdateExitDelay updateExitDelay) {
         var seconds = updateExitDelay.seconds();
-        if (seconds >= 0) {
+        if (seconds >= 20 && seconds <= 60) {
             exitDelay = seconds;
         }
 
@@ -156,7 +139,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     public void OnUpdateEntryDelay(UpdateEntryDelay updateEntryDelay) {
         var seconds = updateEntryDelay.seconds();
-        if (seconds > 0) {
+        if (seconds >= 10 && seconds <= 30) {
             entryDelay = seconds;
         }
 

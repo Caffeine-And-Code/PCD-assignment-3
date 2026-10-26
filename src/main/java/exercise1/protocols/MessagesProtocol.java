@@ -1,6 +1,7 @@
 package exercise1.protocols;
 
 import exercise1.gui.DelayControl;
+import javafx.scene.control.Label;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public abstract class MessagesProtocol {
 
     // From UI to UIActor
     public record EnterPinDigit(int digit){}
-    public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel){}
+    public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel, Label errorLabel){}
     // update entry delay
     // update exit delay
     // assign sensor to zone
