@@ -18,14 +18,14 @@ public final class ZoneOverviewPanel extends BorderPane {
             FXCollections.observableMap(new LinkedHashMap<>());
 
     private final ZoneCanvas zoneCanvas;
-    private final AlarmIndicator alarmIndicator = new AlarmIndicator();
+    private final AlarmIndicator alarmIndicator;
     private final Label systemStateLabel = new Label();
 
     public ZoneOverviewPanel() {
         setPadding(new Insets(8));
         setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
-        AlarmIndicator alarmIndicator = new AlarmIndicator();
+        alarmIndicator = new AlarmIndicator();
         HBox alarm = new HBox(6, systemStateLabel, alarmIndicator);
         alarm.setAlignment(Pos.CENTER_RIGHT);
 
@@ -59,6 +59,6 @@ public final class ZoneOverviewPanel extends BorderPane {
     }
 
     public void setAlarmActive(boolean active) {
-        alarmIndicator.setStatus(active); // adatta al metodo reale di AlarmIndicator
+        alarmIndicator.setStatus(active);
     }
 }

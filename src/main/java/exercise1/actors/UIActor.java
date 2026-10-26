@@ -3,6 +3,7 @@ package exercise1.actors;
 import exercise1.gui.DelayControl;
 import exercise1.gui.ZoneOverviewPanel;
 import exercise1.protocols.MessagesProtocol.*;
+import exercise1.protocols.SystemState;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
@@ -75,17 +76,6 @@ public class UIActor extends AbstractActorWithStash {
         unstashAll();
     }
 
-    private void handleSystemStateUpdated(SystemStateUpdated data) {
-        String label = switch (data.state()) {
-            case DISARMED -> "Disarmed";
-            case EXIT_DELAY -> "Exit delay";
-            case ARMED -> "Armed";
-            case ENTRY_DELAY -> "Entry delay";
-            case ALARM -> "Alarm";
-        };
-        Platform.runLater(() -> systemStateLabel.setText(label));
-    }
-
     /** -- Responses from the Backend -- **/
 
     private void handleGetZoneReply(GetZonesReply data) {
@@ -106,6 +96,21 @@ public class UIActor extends AbstractActorWithStash {
             PauseTransition pause = new PauseTransition(Duration.seconds(3));
             pause.setOnFinished(e -> errorLabel.setText(""));
             pause.play();
+        });
+    }
+
+    private void handleSystemStateUpdated(SystemStateUpdated data) {
+        String label = switch (data.state()) {
+            case DISARMED -> "Disarmed";
+            case EXIT_DELAY -> "Exit delay";
+            case ARMED -> "Armed";
+            case ENTRY_DELAY -> "Entry delay";
+            case ALARM -> "Alarm";
+        };
+
+        Platform.runLater(() -> {
+            systemStateLabel.setText(label);
+            zoneCanvas.setAlarmActive(data.state() == SystemState.ARMED);
         });
     }
 

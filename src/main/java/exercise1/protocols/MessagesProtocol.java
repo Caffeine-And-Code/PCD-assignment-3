@@ -40,7 +40,7 @@ public abstract class MessagesProtocol {
 
     // From UI to UIActor
     public record EnterPinDigit(int digit, List<String> zonesToActivate){}
-    public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel, ZoneOverviewPanel zoneCanvas, Label errorLabel){}
+    public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel, ZoneOverviewPanel zoneCanvas,Label systemStateLabel,Label errorLabel){}
     // update entry delay
     // update exit delay
     // assign sensor to zone

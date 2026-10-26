@@ -40,6 +40,7 @@ public final class Dashboard extends BorderPane {
                         delaySettings.getEntryDelay(),
                         delaySettings.getExitDelay(),
                         zoneOverview,
+                        zoneOverview.getSystemStateLabel(),
                         errorLabel
                 ),
                 ActorRef.noSender()
