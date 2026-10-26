@@ -1,8 +1,5 @@
 package exercise1.gui;
 
-import scala.collection.SeqView;
-import scala.collection.View;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -17,7 +14,7 @@ public final class Dashboard extends JFrame {
         JPanel controls = new JPanel();
         controls.setOpaque(false);
         controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
-        controls.setPreferredSize(new Dimension(150, 0));
+        controls.setPreferredSize(new Dimension(200, 0));
         controls.add(new KeypadPanel());
         controls.add(Box.createRigidArea(new Dimension(0, 10)));
         controls.add(new DelaySettingsPanel());

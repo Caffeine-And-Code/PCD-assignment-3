@@ -25,19 +25,21 @@ final class DelayControl extends JPanel {
         this.value = new JLabel(this.seconds + " s", SwingConstants.CENTER);
 
         JButton decrease = new JButton("-");
-        decrease.setPreferredSize(new Dimension(30, decrease.getPreferredSize().height));
         JButton increase = new JButton("+");
-        increase.setPreferredSize(new Dimension(30, increase.getPreferredSize().height));
-        decrease.setFocusPainted(false);
-        increase.setFocusPainted(false);
+        for (JButton button : new JButton[]{decrease, increase}) {
+            button.setPreferredSize(new Dimension(30, 30));
+            button.setMargin(new Insets(0, 0, 0, 0));
+            button.setFocusPainted(false);
+        }
         decrease.addActionListener(event -> setSeconds(this.seconds - 1));
         increase.addActionListener(event -> setSeconds(this.seconds + 1));
 
-        JPanel stepper = new JPanel(new BorderLayout(5, 0));
+        this.value.setPreferredSize(new Dimension(50, 30));
+        JPanel stepper = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         stepper.setBackground(Color.WHITE);
-        stepper.add(decrease, BorderLayout.WEST);
-        stepper.add(value, BorderLayout.CENTER);
-        stepper.add(increase, BorderLayout.EAST);
+        stepper.add(decrease);
+        stepper.add(value);
+        stepper.add(increase);
 
         add(title, BorderLayout.NORTH);
         add(stepper, BorderLayout.CENTER);
