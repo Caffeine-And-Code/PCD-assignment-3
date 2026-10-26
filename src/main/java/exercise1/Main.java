@@ -1,9 +1,14 @@
 package exercise1;
 
-import java.util.List;
+import exercise1.gui.Dashboard;
+
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        List<String> labels = List.of("Alfa", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta");
+        SwingUtilities.invokeLater(() -> {
+            Dashboard frame = new Dashboard();
+            frame.setVisible(true);
+        });
     }
 }

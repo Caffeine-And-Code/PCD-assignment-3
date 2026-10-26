@@ -1,4 +1,4 @@
-package exercise1;
+package exercise1.gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,18 +49,10 @@ public class ZoneCanvas extends JPanel {
         });
     }
 
-    /**
-     * Get the Column number based on the screen available width
-     *
-     * @return int number of columns
-     */
     private int getAvailableColumns() {
         return Math.max(1, (getWidth() - PADDING) / CELL_WIDTH);
     }
 
-    /**
-     * Get the Rectangle at the provided list index
-     */
     private Rectangle boundsOf(int index) {
         int cols = getAvailableColumns();
         int x = PADDING + (index % cols) * CELL_WIDTH;
@@ -69,9 +61,6 @@ public class ZoneCanvas extends JPanel {
         return new Rectangle(x, y, TILE_WIDTH, TILE_HEIGHT);
     }
 
-    /**
-     * Get the index at the clicked location, -1 otherwise
-     */
     private int indexAt(Point p) {
         for (int i = 0; i < tiles.size(); i++) {
             if (boundsOf(i).contains(p)) {
