@@ -1,7 +1,9 @@
 package exercise1;
 
+import java.util.List;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        List<String> labels = List.of("Alfa", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta");
     }
 }
