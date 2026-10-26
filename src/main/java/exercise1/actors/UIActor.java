@@ -9,6 +9,7 @@ import javax.swing.*;
 
 public class UIActor extends AbstractActorWithStash {
     private static final int PIN_LENGHT = 5;
+
     private JLabel entryDelayRef;
     private JLabel exitDelayRef;
     private String currentPin;
@@ -99,7 +100,7 @@ public class UIActor extends AbstractActorWithStash {
 
         currentPin += data.digit();
 
-        if(currentPin.length() >= PIN_LENGHT) {
+        if (currentPin.length() >= PIN_LENGHT) {
             // send PinEntered message
 
             currentPin = "";
