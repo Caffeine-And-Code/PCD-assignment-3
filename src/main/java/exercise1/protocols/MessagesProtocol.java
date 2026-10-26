@@ -1,42 +1,41 @@
 package exercise1.protocols;
 
-import org.apache.pekko.actor.ActorRef;
-
-import javax.swing.*;
 import java.util.List;
+import javax.swing.*;
 import java.util.Map;
 
 public abstract class MessagesProtocol {
 
     // Internally for actor comunication
-    public static record ActiveZone(){}
-    public static record DeactiveZone(){}
-    public static record ZoneActivated(String zoneId){}
-    public static record ZoneDeactivated(String zoneId){}
+    public record ActiveZone(){}
+    public record DeactiveZone(){}
+    public record ZoneActivated(String zoneId){}
+    public record ZoneDeactivated(String zoneId){}
 
     // From UI to actors
-    public static record GetZonesRequest(){} //controlUnit
-    public static record CreateZone(String zoneId){} //controlUnit
+    public record GetZonesRequest(){} //controlUnit
+    public record CreateZone(String zoneId){} //controlUnit
     // Only if no sensor in the zone is present
-    public static record DeleteZone(String zoneId){} //controlUnit
-    public static record AssignSensorToZone(String zoneId, String sensorId){} //controlUnit
-    public static record UpdateExitDelay(int seconds){} //controlUnit
-    public static record UpdateEntryDelay(int seconds){} //controlUnit
-    public static record PinEntered(String pin, List<String> zonesToActive){} //controlUnit
-    public static record SensorDetection(){} //actorSelection("/controlUnit/{sensorId}")
+    public record DeleteZone(String zoneId){} //controlUnit
+    public record AssignSensorToZone(String zoneId, String sensorId){} //controlUnit
+    public record UpdateExitDelay(int seconds){} //controlUnit
+    public record UpdateEntryDelay(int seconds){} //controlUnit
+    public record PinEnteredWithZones(String pin, List<String> zonesToActive){} //controlUnit
+    public record PinEntered(String pin){} //controlUnit
+    public record SensorDetection(){} //actorSelection("/controlUnit/{sensorId}")
 
     // To UI from actors
-    public static record GetZonesReply(Map<String, List<String>> zoneSensors){}
-    public static record ExitDelayUpdated(int seconds){}
-    public static record EntryDelayUpdated(int seconds){}
-    public static record InvalidPinEntered(){}
-    public static record UpdatedZoneStates(Map<String, Boolean> zoneStates){}
-    public static record UpdatedZoneSensors(Map<String, List<String>> zoneSensors){}
-    public static record AlarmActiveUpdate(Boolean alarmActive){}
+    public record GetZonesReply(Map<String, List<String>> zoneSensors){}
+    public record ExitDelayUpdated(int seconds){}
+    public record EntryDelayUpdated(int seconds){}
+    public record InvalidPinEntered(){}
+    public record UpdatedZoneStates(Map<String, Boolean> zoneStates){}
+    public record UpdatedZoneSensors(Map<String, List<String>> zoneSensors){}
+    public record AlarmActiveUpdate(Boolean alarmActive){}
 
     // From UI to UIActor
-    public static record EnterPinDigit(int digit){}
-    public static record BindUi(JLabel entryDelayLabel, JLabel exitDelayLabel){}
+    public record EnterPinDigit(int digit){}
+    public record BindUi(JLabel entryDelayLabel, JLabel exitDelayLabel){}
     // update entry delay
     // update exit delay
     // assign sensor to zone
