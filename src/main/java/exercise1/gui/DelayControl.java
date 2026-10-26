@@ -25,9 +25,9 @@ final class DelayControl extends JPanel {
         this.value = new JLabel(this.seconds + " s", SwingConstants.CENTER);
 
         JButton decrease = new JButton("-");
-        decrease.setPreferredSize(new Dimension(20, decrease.getPreferredSize().height));
+        decrease.setPreferredSize(new Dimension(30, decrease.getPreferredSize().height));
         JButton increase = new JButton("+");
-        increase.setPreferredSize(new Dimension(20, increase.getPreferredSize().height));
+        increase.setPreferredSize(new Dimension(30, increase.getPreferredSize().height));
         decrease.setFocusPainted(false);
         increase.setFocusPainted(false);
         decrease.addActionListener(event -> setSeconds(this.seconds - 1));
