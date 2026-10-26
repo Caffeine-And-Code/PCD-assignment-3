@@ -9,6 +9,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import org.apache.pekko.actor.ActorRef;
 
+import java.util.ArrayList;
+
 final class KeypadPanel extends VBox {
     private static final int MAX_DIGITS_NUMBER = 5;
 
@@ -52,7 +54,7 @@ final class KeypadPanel extends VBox {
 
     private void pinButtonPressed(int digit) {
         enteredDigits += digit;
-        this.ui.tell(new MessagesProtocol.EnterPinDigit(digit), ActorRef.noSender());
+        this.ui.tell(new MessagesProtocol.EnterPinDigit(digit, new ArrayList<>()), ActorRef.noSender());
 
         if (enteredDigits.length() >= MAX_DIGITS_NUMBER) {
             enteredDigits = "";

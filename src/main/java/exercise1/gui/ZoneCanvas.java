@@ -1,5 +1,8 @@
 package exercise1.gui;
 
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -18,7 +21,13 @@ public class ZoneCanvas extends TilePane {
     private static final double SATURATION = 0.25;
     private static final double BRIGHTNESS = 0.95;
 
-    public ZoneCanvas(List<String> labels, ZonePopupMenu menu) {
+    private final ListProperty<String> labels =
+            new SimpleListProperty<>(FXCollections.observableArrayList());
+    private final ZonePopupMenu menu;
+
+    public ZoneCanvas(List<String> initialLabels, ZonePopupMenu menu) {
+        this.menu = menu;
+
         setPadding(new Insets(PADDING));
         setHgap(PADDING);
         setVgap(PADDING);
@@ -27,22 +36,27 @@ public class ZoneCanvas extends TilePane {
         setTileAlignment(Pos.CENTER);
         setStyle("-fx-background-color: white;");
 
-        for (String label : labels) {
-            StackPane tile = createTile(label);
-            tile.setOnMouseClicked(event -> {
-                if (event.getButton() == MouseButton.SECONDARY) {
-                    menu.showFor(tile, event.getScreenX(), event.getScreenY(), label);
-                    event.consume();
-                }
-            });
-            getChildren().add(tile);
-        }
-
         setOnMousePressed(event -> {
             if (event.getButton() != MouseButton.SECONDARY) {
                 menu.hide();
             }
         });
+
+        labels.addListener((javafx.collections.ListChangeListener<String>) change -> rebuildTiles());
+        labels.addListener((obs, oldList, newList) -> rebuildTiles());
+
+        setLabels(initialLabels);
+    }
+
+    public void setLabels(List<String> newLabels) {
+        labels.setAll(newLabels);
+    }
+
+    private void rebuildTiles() {
+        getChildren().clear();
+        for (String label : labels) {
+            getChildren().add(createTile(label));
+        }
     }
 
     private StackPane createTile(String label) {
@@ -57,6 +71,14 @@ public class ZoneCanvas extends TilePane {
                 "-fx-background-color: " + toHex(color) + ";"
                         + "-fx-border-color: #454545;"
         );
+
+        tile.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.SECONDARY) {
+                menu.showFor(tile, event.getScreenX(), event.getScreenY(), label);
+                event.consume();
+            }
+        });
+
         return tile;
     }
 

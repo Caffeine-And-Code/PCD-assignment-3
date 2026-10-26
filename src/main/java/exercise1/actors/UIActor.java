@@ -1,6 +1,7 @@
 package exercise1.actors;
 
 import exercise1.gui.DelayControl;
+import exercise1.gui.ZoneCanvas;
 import exercise1.protocols.MessagesProtocol.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -19,6 +20,7 @@ public class UIActor extends AbstractActorWithStash {
 
     private DelayControl entryDelayRef;
     private DelayControl exitDelayRef;
+    private ZoneCanvas zoneCanvas;
     private Label errorLabel;
     private String currentPin = "";
     // TODO: zoneCanvasRef, alarmRef
@@ -56,6 +58,7 @@ public class UIActor extends AbstractActorWithStash {
                 .match(EnterPinDigit.class, this::handleEnterPinDigit)
                 .match(UpdateEntryDelay.class, this::onUpdateEntryRequest)
                 .match(UpdateExitDelay.class, this::onUpdateExitRequest)
+                .match(GetZonesRequest.class, this::onGetZoneRequest)
                 .build();
     }
 
@@ -63,6 +66,7 @@ public class UIActor extends AbstractActorWithStash {
         this.entryDelayRef = ui.entryDelayLabel();
         this.exitDelayRef = ui.exitDelayLabel();
         this.errorLabel = ui.errorLabel();
+        this.zoneCanvas = ui.zoneCanvas();
 
         // now process the stashed messages
         getContext().become(ready());
@@ -71,7 +75,7 @@ public class UIActor extends AbstractActorWithStash {
 
     private void handleGetZoneReply(GetZonesReply data) {
         Platform.runLater(() -> {
-            // aggiorna lo ZoneCanvas
+            this.zoneCanvas.setLabels(data.zoneSensors().keySet().stream().toList());
         });
     }
 
@@ -115,6 +119,10 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     private void onUpdateEntryRequest(UpdateEntryDelay data){
+        controlUnit.tell(data, this.getSelf());
+    }
+
+    private void onGetZoneRequest(GetZonesRequest data) {
         controlUnit.tell(data, this.getSelf());
     }
 
