@@ -16,7 +16,7 @@ public abstract class MessagesProtocol {
     // From UI to actors
     public static record GetZonesRequest(){} //controlUnit
     public static record CreateZone(String zoneId){} //controlUnit
-    // Only if no sensor in the zone is prensent
+    // Only if no sensor in the zone is present
     public static record DeleteZone(String zoneId){} //controlUnit
     public static record AssignSensorToZone(ActorRef zoneRef){} //controlUnit
     public static record UpdateExitDelay(int seconds){} //controlUnit
@@ -26,11 +26,11 @@ public abstract class MessagesProtocol {
 
     // To UI from actors
     public static record GetZonesReply(Map<String, List<String>> zoneSensors){}
-    public static record exitDelayUpdated(int seconds){}
-    public static record entryDelayUpdated(int seconds){}
-    public static record invalidPinEntered(){}
-    public static record updatedZoneStates(Map<String, Boolean> zoneStates){}
-    public static record updatedZoneSensors(Map<String, List<String>> zoneSensors){}
-    public static record alarmActiveUpdate(Boolean alarmActive){}
+    public static record ExitDelayUpdated(int seconds){}
+    public static record EntryDelayUpdated(int seconds){}
+    public static record InvalidPinEntered(){}
+    public static record UpdatedZoneStates(Map<String, Boolean> zoneStates){}
+    public static record UpdatedZoneSensors(Map<String, List<String>> zoneSensors){}
+    public static record AlarmActiveUpdate(Boolean alarmActive){}
 
 }
