@@ -1,7 +1,8 @@
 package exercise1.actors;
 
-import org.apache.pekko.actor.*;
 import exercise1.protocols.MessagesProtocol.*;
+import org.apache.pekko.actor.AbstractActor;
+import org.apache.pekko.actor.ActorRef;
 
 public class ZoneActor extends AbstractActor {
     private final ActorRef uiActorRef;

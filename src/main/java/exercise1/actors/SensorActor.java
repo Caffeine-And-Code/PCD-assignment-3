@@ -1,12 +1,13 @@
 package exercise1.actors;
 
-import exercise1.protocols.MessagesProtocol.*;
+import exercise1.protocols.MessagesProtocol.AssignSensorToZone;
+import exercise1.protocols.MessagesProtocol.SensorDetection;
 import org.apache.pekko.actor.AbstractActor;
 import org.apache.pekko.actor.ActorRef;
 
 public class SensorActor extends AbstractActor {
     public ActorRef zoneRef;
-    private String identifier;
+    private final String identifier;
 
     public SensorActor(ActorRef zoneRef, String identifier){
         this.zoneRef = zoneRef;

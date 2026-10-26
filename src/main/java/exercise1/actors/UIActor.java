@@ -11,8 +11,6 @@ import org.apache.pekko.actor.AbstractActorWithStash;
 import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Props;
 
-import java.util.ArrayList;
-
 public class UIActor extends AbstractActorWithStash {
     private static final int PIN_LENGHT = 5;
 
@@ -73,10 +71,10 @@ public class UIActor extends AbstractActorWithStash {
         unstashAll();
     }
 
+    /** -- Responses from the Backend -- **/
+
     private void handleGetZoneReply(GetZonesReply data) {
-        Platform.runLater(() -> {
-            this.zoneCanvas.setLabels(data.zoneSensors().keySet().stream().toList());
-        });
+        Platform.runLater(() -> this.zoneCanvas.setLabels(data.zoneSensors().keySet().stream().toList()));
     }
 
     private void handleExitDelayUpdated(ExitDelayUpdated data) {
@@ -114,6 +112,8 @@ public class UIActor extends AbstractActorWithStash {
         });
     }
 
+    /** -- Frontend Requests forwarded to ControlUnit -- **/
+
     private void onUpdateExitRequest(UpdateExitDelay data){
         controlUnit.tell(data, this.getSelf());
     }
@@ -134,7 +134,7 @@ public class UIActor extends AbstractActorWithStash {
         currentPin += data.digit();
 
         if (currentPin.length() >= PIN_LENGHT) {
-            controlUnit.tell(new PinEnteredWithZones(currentPin, new ArrayList<>()), this.getSelf());
+            controlUnit.tell(new PinEnteredWithZones(currentPin, data.zonesToActivate()), this.getSelf());
 
             currentPin = "";
         }
