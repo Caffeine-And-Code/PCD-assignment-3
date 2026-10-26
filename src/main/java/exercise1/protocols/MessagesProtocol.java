@@ -18,7 +18,7 @@ public abstract class MessagesProtocol {
     public static record CreateZone(String zoneId){} //controlUnit
     // Only if no sensor in the zone is present
     public static record DeleteZone(String zoneId){} //controlUnit
-    public static record AssignSensorToZone(String zoneId){} //controlUnit
+    public static record AssignSensorToZone(String zoneId, String sensorId){} //controlUnit
     public static record UpdateExitDelay(int seconds){} //controlUnit
     public static record UpdateEntryDelay(int seconds){} //controlUnit
     public static record PinEntered(String pin, List<String> zonesToActive){} //controlUnit
