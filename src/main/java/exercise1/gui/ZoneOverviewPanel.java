@@ -12,6 +12,7 @@ import java.util.Map;
 
 final class ZoneOverviewPanel extends BorderPane {
     private final ZoneCanvas zoneCanvas;
+    private final Label systemStateLabel = new Label();
 
     ZoneOverviewPanel() {
         final var sensorsByZone = new HashMap<String, List<String>>(Map.of());
@@ -19,7 +20,7 @@ final class ZoneOverviewPanel extends BorderPane {
         setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8;");
 
         AlarmIndicator alarmIndicator = new AlarmIndicator();
-        HBox alarm = new HBox(6, new Label("Alarm"), alarmIndicator);
+        HBox alarm = new HBox(6, systemStateLabel, alarmIndicator);
         alarm.setAlignment(Pos.CENTER_RIGHT);
 
         ZonePopupMenu popupMenu = new ZonePopupMenu(sensorsByZone);
@@ -32,5 +33,9 @@ final class ZoneOverviewPanel extends BorderPane {
 
     public ZoneCanvas getZoneCanvas() {
         return zoneCanvas;
+    }
+
+    public Label getSystemStateLabel() {
+        return systemStateLabel;
     }
 }

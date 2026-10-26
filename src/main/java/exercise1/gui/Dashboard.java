@@ -11,6 +11,7 @@ import org.apache.pekko.actor.ActorRef;
 public final class Dashboard extends BorderPane {
     public Dashboard(ActorRef uiActor) {
         VBox controls = new VBox(10);
+
         final var errorLabel = new Label("");
         errorLabel.setAlignment(Pos.CENTER);
         errorLabel.setMaxWidth(Double.MAX_VALUE);
@@ -27,6 +28,7 @@ public final class Dashboard extends BorderPane {
 
         final var zoneOverview = new ZoneOverviewPanel();
         uiActor.tell(new MessagesProtocol.GetZonesRequest(), ActorRef.noSender());
+        uiActor.tell(new MessagesProtocol.GetSystemStateRequest(), ActorRef.noSender());
         setCenter(zoneOverview);
 
         BorderPane.setMargin(getCenter(), new Insets(0, 0, 0, 10));
@@ -38,7 +40,8 @@ public final class Dashboard extends BorderPane {
                         delaySettings.getEntryDelay(),
                         delaySettings.getExitDelay(),
                         zoneOverview.getZoneCanvas(),
-                        errorLabel
+                        errorLabel,
+                        zoneOverview.getSystemStateLabel()
                 ),
                 ActorRef.noSender()
         );

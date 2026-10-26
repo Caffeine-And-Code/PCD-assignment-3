@@ -17,6 +17,7 @@ public abstract class MessagesProtocol {
 
     // From UI to actors
     public record GetZonesRequest(){} //controlUnit
+    public record GetSystemStateRequest(){} //controlUnit
     public record CreateZone(String zoneId){} //controlUnit
     // Only if no sensor in the zone is present
     public record DeleteZone(String zoneId){} //controlUnit
@@ -29,6 +30,7 @@ public abstract class MessagesProtocol {
 
     // To UI from actors
     public record GetZonesReply(Map<String, List<String>> zoneSensors){}
+    public record SystemStateUpdated(SystemState state){}
     public record ExitDelayUpdated(int seconds){}
     public record EntryDelayUpdated(int seconds){}
     public record InvalidPinEntered(){}
@@ -38,7 +40,7 @@ public abstract class MessagesProtocol {
 
     // From UI to UIActor
     public record EnterPinDigit(int digit, List<String> zonesToActivate){}
-    public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel, ZoneCanvas zoneCanvas, Label errorLabel){}
+    public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel, ZoneCanvas zoneCanvas, Label errorLabel, Label systemStateLabel){}
     // update entry delay
     // update exit delay
     // assign sensor to zone

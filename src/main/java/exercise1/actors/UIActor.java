@@ -20,6 +20,7 @@ public class UIActor extends AbstractActorWithStash {
     private DelayControl exitDelayRef;
     private ZoneCanvas zoneCanvas;
     private Label errorLabel;
+    private Label systemStateLabel;
     private String currentPin = "";
     // TODO: zoneCanvasRef, alarmRef
 
@@ -46,6 +47,7 @@ public class UIActor extends AbstractActorWithStash {
                 .match(BindUi.class, this::handleBindUi) // enables the re-bind
                 // "backend" messages
                 .match(GetZonesReply.class, this::handleGetZoneReply)
+                .match(SystemStateUpdated.class, this::handleSystemStateUpdated)
                 .match(ExitDelayUpdated.class, this::handleExitDelayUpdated)
                 .match(EntryDelayUpdated.class, this::handleEntryDelayUpdated)
                 .match(InvalidPinEntered.class, this::handleInvalidPinEntered)
@@ -57,6 +59,7 @@ public class UIActor extends AbstractActorWithStash {
                 .match(UpdateEntryDelay.class, this::onUpdateEntryRequest)
                 .match(UpdateExitDelay.class, this::onUpdateExitRequest)
                 .match(GetZonesRequest.class, this::onGetZoneRequest)
+                .match(GetSystemStateRequest.class, this::onGetSystemStateRequest)
                 .build();
     }
 
@@ -65,10 +68,22 @@ public class UIActor extends AbstractActorWithStash {
         this.exitDelayRef = ui.exitDelayLabel();
         this.errorLabel = ui.errorLabel();
         this.zoneCanvas = ui.zoneCanvas();
+        this.systemStateLabel = ui.systemStateLabel();
 
         // now process the stashed messages
         getContext().become(ready());
         unstashAll();
+    }
+
+    private void handleSystemStateUpdated(SystemStateUpdated data) {
+        String label = switch (data.state()) {
+            case DISARMED -> "Disarmed";
+            case EXIT_DELAY -> "Exit delay";
+            case ARMED -> "Armed";
+            case ENTRY_DELAY -> "Entry delay";
+            case ALARM -> "Alarm";
+        };
+        Platform.runLater(() -> systemStateLabel.setText(label));
     }
 
     /** -- Responses from the Backend -- **/
@@ -124,6 +139,10 @@ public class UIActor extends AbstractActorWithStash {
 
     private void onGetZoneRequest(GetZonesRequest data) {
         controlUnit.tell(data, this.getSelf());
+    }
+
+    private void onGetSystemStateRequest(GetSystemStateRequest data) {
+        controlUnit.tell(data, getSelf());
     }
 
     private void handleEnterPinDigit(EnterPinDigit data) {

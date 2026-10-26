@@ -1,6 +1,7 @@
 package exercise1.actors;
 
 import exercise1.protocols.MessagesProtocol.*;
+import exercise1.protocols.SystemState;
 import org.apache.pekko.actor.AbstractActorWithStash;
 import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Cancellable;
@@ -23,6 +24,8 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     private final HashMap<String, List<String>> zoneSensors = new HashMap<>();
     private final HashMap<String, Boolean> activeZones = new HashMap<>();
+    private SystemState state = SystemState.DISARMED;
+    private ActorRef uiActorRef;
     private int exitDelay = 30; //seconds
     private int entryDelay = 30; //seconds
     private final String correctPin = "12345";
@@ -87,7 +90,8 @@ public class ControlUnitActor extends AbstractActorWithStash {
     private ReceiveBuilder defaultBuilder() {
         //noinspection deprecation
         return receiveBuilder()
-                .match(GetZonesRequest.class, this::OnGetZonesRequest);
+                .match(GetZonesRequest.class, this::OnGetZonesRequest)
+                .match(GetSystemStateRequest.class, this::onGetSystemStateRequest);
     }
 
     private ReceiveBuilder stashCRUD(ReceiveBuilder builder) {
@@ -101,6 +105,11 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     public void OnGetZonesRequest(GetZonesRequest req) {
         getSender().tell(new GetZonesReply(zoneSensors), getSelf());
+    }
+
+    private void onGetSystemStateRequest(GetSystemStateRequest request) {
+        uiActorRef = getSender();
+        uiActorRef.tell(new SystemStateUpdated(state), getSelf());
     }
 
     public void OnCreateZone(CreateZone createZone) {
@@ -204,6 +213,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     private void enterExitDelay() {
         getContext().become(exitDelay());
+        updateState(SystemState.EXIT_DELAY);
 
         getContext().getSystem().getScheduler().scheduleOnce(
                 Duration.ofSeconds(exitDelay),
@@ -224,6 +234,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     private void enterEntryDelay() {
         getContext().become(entryDelay());
+        updateState(SystemState.ENTRY_DELAY);
 
         entryTimeout = getContext().getSystem().getScheduler().scheduleOnce(
                 Duration.ofSeconds(entryDelay),
@@ -236,15 +247,25 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     private void enterArmed() {
         getContext().become(armed());
+        updateState(SystemState.ARMED);
     }
 
     private void enterAlarm() {
         getContext().become(alarm());
+        updateState(SystemState.ALARM);
     }
 
     private void enterDisarmed() {
         getContext().become(disarmed());
+        updateState(SystemState.DISARMED);
 
         unstashAll();
+    }
+
+    private void updateState(SystemState newState) {
+        state = newState;
+        if (uiActorRef != null) {
+            uiActorRef.tell(new SystemStateUpdated(state), getSelf());
+        }
     }
 }
