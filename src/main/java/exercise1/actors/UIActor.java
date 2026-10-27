@@ -13,7 +13,7 @@ import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Props;
 
 public class UIActor extends AbstractActorWithStash {
-    private static final int PIN_LENGHT = 5;
+    private static final int PIN_LENGTH = 5;
 
     private final ActorRef controlUnit;
 
@@ -23,7 +23,7 @@ public class UIActor extends AbstractActorWithStash {
     private Label errorLabel;
     private Label systemStateLabel;
     private String currentPin = "";
-    // TODO: zoneCanvasRef, alarmRef
+    private SystemState systemState = SystemState.DISARMED;
 
     public static Props props(ActorRef controlUnit) {
         return Props.create(UIActor.class, () -> new UIActor(controlUnit));
@@ -52,6 +52,7 @@ public class UIActor extends AbstractActorWithStash {
                 .match(ExitDelayUpdated.class, this::handleExitDelayUpdated)
                 .match(EntryDelayUpdated.class, this::handleEntryDelayUpdated)
                 .match(InvalidPinEntered.class, this::handleInvalidPinEntered)
+                .match(OperationRejected.class, msg -> showError(msg.reason()))
                 .match(UpdatedZoneStates.class, this::handleUpdatedZoneStates)
                 .match(UpdatedZoneSensors.class, this::handleUpdatedZoneSensors)
                 .match(AlarmActiveUpdate.class, this::handleAlarmActiveUpdate)
@@ -62,6 +63,8 @@ public class UIActor extends AbstractActorWithStash {
                 .match(UpdateExitDelay.class, this::onUpdateExitRequest)
                 .match(GetZonesRequest.class, this::onGetZoneRequest)
                 .match(GetSystemStateRequest.class, this::onGetSystemStateRequest)
+                .match(DeleteZone.class, msg -> controlUnit.tell(msg, getSelf()))
+                .match(SensorDetectionRequested.class, this::onSensorDetectionRequested)
                 .match(CreateZone.class, this::onCreateZoneRequest)
                 .build();
     }
@@ -93,8 +96,12 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     private void handleInvalidPinEntered(InvalidPinEntered data) {
+        showError("Invalid PIN provided");
+    }
+
+    private void showError(String message) {
         Platform.runLater(() -> {
-            this.errorLabel.setText("Invalid Pin Provided");
+            this.errorLabel.setText(message);
             PauseTransition pause = new PauseTransition(Duration.seconds(3));
             pause.setOnFinished(e -> errorLabel.setText(""));
             pause.play();
@@ -102,6 +109,7 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     private void handleSystemStateUpdated(SystemStateUpdated data) {
+        systemState = data.state();
         String label = switch (data.state()) {
             case DISARMED -> "Disarmed";
             case EXIT_DELAY -> "Exit delay";
@@ -112,13 +120,13 @@ public class UIActor extends AbstractActorWithStash {
 
         Platform.runLater(() -> {
             systemStateLabel.setText(label);
-            zoneCanvas.setAlarmActive(data.state() == SystemState.ARMED);
+            zoneCanvas.setAlarmActive(data.state() == SystemState.ALARM);
         });
     }
 
     private void handleUpdatedZoneStates(UpdatedZoneStates data) {
         Platform.runLater(() -> {
-            // aggiorna lo stato delle zone
+            zoneCanvas.setZoneStates(data.zoneStates());
         });
     }
 
@@ -128,11 +136,16 @@ public class UIActor extends AbstractActorWithStash {
 
     private void handleAlarmActiveUpdate(AlarmActiveUpdate data) {
         Platform.runLater(() -> {
-            // aggiorna l'indicatore dell'allarme
+            zoneCanvas.setAlarmActive(data.alarmActive());
         });
     }
 
     /** -- Frontend Requests forwarded to ControlUnit -- **/
+
+    private void onSensorDetectionRequested(SensorDetectionRequested request) {
+        getContext().actorSelection(controlUnit.path().child(request.sensorId()))
+                .tell(new SensorDetection(), getSelf());
+    }
 
     private void onCreateZoneRequest(CreateZone createZone) {
         controlUnit.tell(createZone, this.getSelf());
@@ -159,14 +172,19 @@ public class UIActor extends AbstractActorWithStash {
     }
 
     private void onEnterPinDigit(EnterPinDigit data) {
-        if (currentPin.length() >= PIN_LENGHT) {
+        if (data.digit() < 0 || data.digit() > 9) return;
+        if (currentPin.length() >= PIN_LENGTH) {
             return;
         }
 
         currentPin += data.digit();
 
-        if (currentPin.length() >= PIN_LENGHT) {
-            controlUnit.tell(new PinEnteredWithZones(currentPin, data.zonesToActivate()), this.getSelf());
+        if (currentPin.length() >= PIN_LENGTH) {
+            if (systemState == SystemState.DISARMED) {
+                controlUnit.tell(new PinEnteredWithZones(currentPin, data.zonesToActivate()), getSelf());
+            } else {
+                controlUnit.tell(new PinEntered(currentPin), getSelf());
+            }
 
             currentPin = "";
         }

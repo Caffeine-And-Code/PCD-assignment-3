@@ -5,11 +5,11 @@ import org.apache.pekko.actor.AbstractActor;
 import org.apache.pekko.actor.ActorRef;
 
 public class ZoneActor extends AbstractActor {
-    private final ActorRef uiActorRef;
+    private final ActorRef controlUnitRef;
     private final String zoneId;
 
-    public ZoneActor(ActorRef uiActorRef, String zoneId){
-        this.uiActorRef = uiActorRef;
+    public ZoneActor(ActorRef controlUnitRef, String zoneId){
+        this.controlUnitRef = controlUnitRef;
         this.zoneId = zoneId;
     }
 
@@ -37,12 +37,12 @@ public class ZoneActor extends AbstractActor {
 
     private void activeZone(ActiveZone activateZone){
         getContext().become(active());
-        uiActorRef.tell(new ZoneActivated(zoneId), getSelf());
+        controlUnitRef.tell(new ZoneActivated(zoneId), getSelf());
     }
 
     private void deactivateZone(DeactiveZone deactivateZone){
         getContext().become(inactive());
-        uiActorRef.tell(new ZoneDeactivated(zoneId), getSelf());
+        controlUnitRef.tell(new ZoneDeactivated(zoneId), getSelf());
     }
 
     private void forwardSensorDetection(SensorDetection detection){

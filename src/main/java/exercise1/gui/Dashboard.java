@@ -21,7 +21,8 @@ public final class Dashboard extends BorderPane {
         errorLabel.setWrapText(true);
         errorLabel.setStyle("-fx-text-fill: #b42318; -fx-font-size: 13px; -fx-font-weight: bold;");
         controls.setPrefWidth(200);
-        controls.getChildren().add(new KeypadPanel(uiActor));
+        final var zoneOverview = new ZoneOverviewPanel(uiActor);
+        controls.getChildren().add(new KeypadPanel(uiActor, zoneOverview::getSelectedZones));
 
         DelaySettingsPanel delaySettings = new DelaySettingsPanel(uiActor);
         final var addZoneBtn = createAddZoneBtn(uiActor);
@@ -32,7 +33,6 @@ public final class Dashboard extends BorderPane {
 
         setLeft(controls);
 
-        final var zoneOverview = new ZoneOverviewPanel(uiActor);
         uiActor.tell(new MessagesProtocol.GetZonesRequest(), ActorRef.noSender());
         uiActor.tell(new MessagesProtocol.GetSystemStateRequest(), ActorRef.noSender());
         setCenter(zoneOverview);
@@ -67,6 +67,7 @@ public final class Dashboard extends BorderPane {
                 final var trimmed = value.trim();
                 if (trimmed.isEmpty()) {
                     new Alert(Alert.AlertType.WARNING, "The value cannot be empty.").showAndWait();
+                    return;
                 }
 
                 uiActor.tell(new MessagesProtocol.CreateZone(trimmed), ActorRef.noSender());

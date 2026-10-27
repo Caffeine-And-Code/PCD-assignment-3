@@ -10,7 +10,9 @@ import java.util.List;
 final class SensorMenu extends Menu {
     SensorMenu(String sensorName, String currentZone, List<String> zones, ActorRef uiActor) {
         super(sensorName);
-        setOnShowing(event -> sendSignal(sensorName));
+        MenuItem detect = new MenuItem("Simulate detection");
+        detect.setOnAction(event -> uiActor.tell(new MessagesProtocol.SensorDetectionRequested(sensorName), ActorRef.noSender()));
+        getItems().add(detect);
 
         for (String destinationZone : zones) {
             MenuItem destination = new MenuItem(destinationZone);
@@ -20,7 +22,4 @@ final class SensorMenu extends Menu {
         }
     }
 
-    private void sendSignal(String sensorName) {
-        System.out.println("Segnale inviato dal sensore '" + sensorName + "' (mock)");
-    }
 }

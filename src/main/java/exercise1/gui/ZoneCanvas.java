@@ -12,7 +12,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.paint.Color;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 final class ZoneCanvas extends TilePane {
@@ -25,6 +27,12 @@ final class ZoneCanvas extends TilePane {
     private final ListProperty<String> labels =
             new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ZonePopupMenu menu;
+    private Map<String, Boolean> zoneStates = new HashMap<>();
+
+    void setZoneStates(Map<String, Boolean> states) {
+        zoneStates = Map.copyOf(states);
+        rebuildTiles();
+    }
 
     ZoneCanvas(List<String> initialLabels, ZonePopupMenu menu) {
         this.menu = menu;
@@ -75,7 +83,7 @@ final class ZoneCanvas extends TilePane {
         double hue = new Random(label.hashCode()).nextDouble() * 360;
         Color color = Color.hsb(hue, SATURATION, BRIGHTNESS);
 
-        StackPane tile = new StackPane(new Label(label));
+        StackPane tile = new StackPane(new Label(label + (zoneStates.getOrDefault(label, false) ? "\nActive" : "\nInactive")));
         tile.setMinSize(TILE_WIDTH, TILE_HEIGHT);
         tile.setPrefSize(TILE_WIDTH, TILE_HEIGHT);
         tile.setMaxSize(TILE_WIDTH, TILE_HEIGHT);

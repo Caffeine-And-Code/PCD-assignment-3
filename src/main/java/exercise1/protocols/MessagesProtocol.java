@@ -9,7 +9,7 @@ import java.util.Map;
 
 public abstract class MessagesProtocol {
 
-    // Internally for actor comunication
+    // Internally for actor communication
     public record ActiveZone(){}
     public record DeactiveZone(){}
     public record ZoneActivated(String zoneId){}
@@ -36,13 +36,11 @@ public abstract class MessagesProtocol {
     public record InvalidPinEntered(){}
     public record UpdatedZoneStates(Map<String, Boolean> zoneStates){}
     public record UpdatedZoneSensors(Map<String, List<String>> zoneSensors){}
-    public record AlarmActiveUpdate(Boolean alarmActive){}
+    public record AlarmActiveUpdate(boolean alarmActive){}
+    public record OperationRejected(String reason){}
 
     // From UI to UIActor
+    public record SensorDetectionRequested(String sensorId){}
     public record EnterPinDigit(int digit, List<String> zonesToActivate){}
     public record BindUi(DelayControl entryDelayLabel, DelayControl exitDelayLabel, ZoneOverviewPanel zoneCanvas,Label systemStateLabel,Label errorLabel){}
-    // update entry delay
-    // update exit delay
-    // assign sensor to zone
-    // sensor detection
 }

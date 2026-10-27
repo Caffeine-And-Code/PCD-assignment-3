@@ -35,6 +35,9 @@ final class ZonePopupMenu extends ContextMenu {
             MenuItem empty = new MenuItem("Nessun sensore");
             empty.setDisable(true);
             getItems().add(empty);
+            MenuItem delete = new MenuItem("Delete zone");
+            delete.setOnAction(event -> uiActor.tell(new exercise1.protocols.MessagesProtocol.DeleteZone(zone), ActorRef.noSender()));
+            getItems().add(delete);
             return;
         }
 

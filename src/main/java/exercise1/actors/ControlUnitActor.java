@@ -2,7 +2,7 @@ package exercise1.actors;
 
 import exercise1.protocols.MessagesProtocol.*;
 import exercise1.protocols.SystemState;
-import org.apache.pekko.actor.AbstractActorWithStash;
+import org.apache.pekko.actor.AbstractActor;
 import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.actor.Cancellable;
 import org.apache.pekko.actor.Props;
@@ -13,17 +13,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
-public class ControlUnitActor extends AbstractActorWithStash {
+public class ControlUnitActor extends AbstractActor {
 
-    private record ExitTimeout() {
+    public record ExitTimeout() {
     }
 
-    private record EntryTimeout() {
+    public record EntryTimeout() {
     }
 
     private final HashMap<String, List<String>> zoneSensors = new HashMap<>();
-    private final HashMap<String, Boolean> activeZones = new HashMap<>();
     private SystemState state = SystemState.DISARMED;
     private ActorRef uiActorRef;
     private int exitDelay = 30; //seconds
@@ -31,13 +33,23 @@ public class ControlUnitActor extends AbstractActorWithStash {
     private final String correctPin = "12345";
 
     private Cancellable entryTimeout;
+    private Cancellable exitTimeout;
 
-    public void setZoneSensors(Map<String, List<String>> initialZoneSensors) {
-        zoneSensors.clear();
-        activeZones.clear();
+    private final Set<String> activeZones = new HashSet<>();
+
+    public ControlUnitActor(Map<String, List<String>> initialZoneSensors){
         initialZoneSensors.forEach((zoneId, sensors) -> {
             zoneSensors.put(zoneId, new ArrayList<>(sensors));
-            activeZones.put(zoneId, false);
+        });
+    }
+
+    @Override
+    public void preStart(){
+        this.zoneSensors.forEach((zoneName, sensors) -> {
+            ActorRef zone = getContext().actorOf(Props.create(ZoneActor.class, getSelf(), zoneName), zoneName);
+            for (String sensor : sensors) {
+                getContext().actorOf(Props.create(SensorActor.class, zone), sensor);
+            }
         });
     }
 
@@ -61,6 +73,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
     private Receive exitDelay() {
         //noinspection deprecation
         return defaultBuilder()
+                .match(PinEntered.class, this::OnPinEnteredFromArmed)
                 .match(ExitTimeout.class, this::OnExitTimeout)
                 .build();
     }
@@ -69,6 +82,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
         //noinspection deprecation
         return defaultBuilder()
                 .match(SensorDetection.class, this::OnSensorDetection)
+                .match(PinEntered.class, this::OnPinEnteredFromArmed)
                 .build();
     }
 
@@ -94,59 +108,55 @@ public class ControlUnitActor extends AbstractActorWithStash {
                 .match(GetSystemStateRequest.class, this::onGetSystemStateRequest);
     }
 
-    private ReceiveBuilder stashCRUD(ReceiveBuilder builder) {
-        return builder
-                .match(CreateZone.class, mag -> stash())
-                .match(DeleteZone.class, mag -> stash())
-                .match(AssignSensorToZone.class, mag -> stash())
-                .match(UpdateExitDelay.class, mag -> stash())
-                .match(UpdateEntryDelay.class, mag -> stash());
-    }
-
     public void OnGetZonesRequest(GetZonesRequest req) {
-        getSender().tell(new GetZonesReply(zoneSensors), getSelf());
+        getSender().tell(new GetZonesReply(getZoneSensorCopy()), getSelf());
     }
 
     private void onGetSystemStateRequest(GetSystemStateRequest request) {
         uiActorRef = getSender();
         uiActorRef.tell(new SystemStateUpdated(state), getSelf());
+        uiActorRef.tell(new ExitDelayUpdated(exitDelay), getSelf());
+        uiActorRef.tell(new EntryDelayUpdated(entryDelay), getSelf());
+        publishZones();
     }
 
     public void OnCreateZone(CreateZone createZone) {
-        var zoneId = createZone.zoneId().trim();
-        if (!zoneId.isEmpty()) {
-            getContext().actorOf(Props.create(ZoneActor.class, getSender(), zoneId), zoneId);
+        var zoneId = createZone.zoneId() == null ? "" : createZone.zoneId().trim();
+        if (!zoneId.isEmpty() && org.apache.pekko.actor.ActorPath.isValidPathElement(zoneId)
+                && !getContext().findChild(zoneId).isPresent()) {
+            getContext().actorOf(Props.create(ZoneActor.class, getSelf(), zoneId), zoneId);
             this.zoneSensors.put(zoneId, new ArrayList<>());
-            activeZones.put(zoneId, false);
+        } else {
+            getSender().tell(new OperationRejected("Use a unique zone name without spaces or slashes."), getSelf());
         }
 
         sendUpdatedZoneSensors(getSender());
+        publishZones();
     }
 
     public void OnDeleteZone(DeleteZone deleteZone) {
         var zoneId = deleteZone.zoneId();
         if (zoneSensors.containsKey(zoneId) && zoneSensors.get(zoneId).isEmpty()) {
             zoneSensors.remove(zoneId);
-            activeZones.remove(zoneId);
             getContext().findChild(zoneId).ifPresent(zoneRef -> getContext().stop(zoneRef));
         }
 
         sendUpdatedZoneSensors(getSender());
+        publishZones();
     }
 
     public void OnAssignSensorToZone(AssignSensorToZone assignSensorToZone) {
         var zoneId = assignSensorToZone.zoneId();
         var sensorId = assignSensorToZone.sensorId();
-        if (zoneSensors.containsKey(zoneId)) {
-            for (var zone : zoneSensors.keySet()) {
-                if (zoneSensors.get(zone).contains(sensorId)) {
-                    zoneSensors.get(zone).remove(sensorId);
-                    zoneSensors.get(zoneId).add(sensorId);
-                }
-            }
+        if (zoneSensors.containsKey(zoneId) && zoneSensors.values().stream().anyMatch(s -> s.contains(sensorId))) {
+            zoneSensors.values().forEach(sensors -> sensors.remove(sensorId));
+            zoneSensors.get(zoneId).add(sensorId);
+            getContext().findChild(sensorId).ifPresent(sensor ->
+                sensor.tell(new SensorActor.SetZone(getContext().findChild(zoneId).orElseThrow()), getSelf()));
         }
 
         sendUpdatedZoneSensors(getSender());
+        publishZones();
     }
 
     public void OnUpdateExitDelay(UpdateExitDelay updateExitDelay) {
@@ -169,14 +179,14 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     public void OnPinEnteredFromDisarmed(PinEnteredWithZones pinEntered) {
         var pinAttempt = pinEntered.pin();
-        if (pinAttempt.equals(correctPin)) {
-            for (var zoneId : pinEntered.zonesToActive()) {
-                if (activeZones.containsKey(zoneId)) {
-                    activeZones.put(zoneId, true);
-                } else {
-                    activeZones.put(zoneId, false);
-                }
+        if (correctPin.equals(pinAttempt)) {
+            if (pinEntered.zonesToActive() == null || pinEntered.zonesToActive().isEmpty()
+                    || !zoneSensors.keySet().containsAll(pinEntered.zonesToActive())) {
+                getSender().tell(new OperationRejected("Select at least one existing zone before arming."), getSelf());
+                return;
             }
+            activeZones.clear();
+            activeZones.addAll(pinEntered.zonesToActive());
             enterExitDelay();
         } else {
             getSender().tell(new InvalidPinEntered(), getSelf());
@@ -185,7 +195,7 @@ public class ControlUnitActor extends AbstractActorWithStash {
 
     public void OnPinEnteredFromArmed(PinEntered pinEntered) {
         var pinAttempt = pinEntered.pin();
-        if (pinAttempt.equals(correctPin)) {
+        if (correctPin.equals(pinAttempt)) {
             if (entryTimeout != null) {
                 entryTimeout.cancel();
             }
@@ -196,7 +206,8 @@ public class ControlUnitActor extends AbstractActorWithStash {
     }
 
     public void OnSensorDetection(SensorDetection sensorDetection) {
-        enterEntryDelay();
+        if (activeZones.stream().anyMatch(zone -> getContext().findChild(zone)
+                .filter(getSender()::equals).isPresent())) enterEntryDelay();
     }
 
     public void OnExitTimeout(ExitTimeout exitTimeout) {
@@ -208,28 +219,20 @@ public class ControlUnitActor extends AbstractActorWithStash {
     }
 
     private void sendUpdatedZoneSensors(ActorRef to) {
-        to.tell(new UpdatedZoneSensors(zoneSensors), getSelf());
+        to.tell(new UpdatedZoneSensors(getZoneSensorCopy()), getSelf());
     }
 
     private void enterExitDelay() {
         getContext().become(exitDelay());
         updateState(SystemState.EXIT_DELAY);
 
-        getContext().getSystem().getScheduler().scheduleOnce(
+        exitTimeout = getContext().getSystem().getScheduler().scheduleOnce(
                 Duration.ofSeconds(exitDelay),
                 getSelf(),
                 new ExitTimeout(),
                 getContext().getDispatcher(),
                 getSelf()
         );
-
-        for (var zoneId : activeZones.keySet()) {
-            if (activeZones.get(zoneId) == true) {
-                getContext().findChild(zoneId).ifPresent(ref -> ref.tell(new ActiveZone(), getSelf()));
-            } else {
-                getContext().findChild(zoneId).ifPresent(ref -> ref.tell(new DeactiveZone(), getSelf()));
-            }
-        }
     }
 
     private void enterEntryDelay() {
@@ -246,6 +249,8 @@ public class ControlUnitActor extends AbstractActorWithStash {
     }
 
     private void enterArmed() {
+        activeZones.forEach(zone -> getContext().findChild(zone)
+                .ifPresent(ref -> ref.tell(new ActiveZone(), getSelf())));
         getContext().become(armed());
         updateState(SystemState.ARMED);
     }
@@ -256,16 +261,42 @@ public class ControlUnitActor extends AbstractActorWithStash {
     }
 
     private void enterDisarmed() {
+        if (exitTimeout != null) exitTimeout.cancel();
+        if (entryTimeout != null) entryTimeout.cancel();
+        activeZones.clear();
+        zoneSensors.keySet().forEach(zone -> getContext().findChild(zone)
+            .ifPresent(ref -> ref.tell(new DeactiveZone(), getSelf())));
         getContext().become(disarmed());
         updateState(SystemState.DISARMED);
-
-        unstashAll();
     }
 
     private void updateState(SystemState newState) {
         state = newState;
+        publishZones();
         if (uiActorRef != null) {
             uiActorRef.tell(new SystemStateUpdated(state), getSelf());
         }
+    }
+
+    private void publishZones() {
+        if (uiActorRef != null) {
+            uiActorRef.tell(new UpdatedZoneStates(zoneSensors.keySet().stream().collect(
+                Collectors.toUnmodifiableMap(zone -> zone, zone ->
+                    state != SystemState.DISARMED && state != SystemState.EXIT_DELAY && activeZones.contains(zone)))), getSelf());
+            uiActorRef.tell(new AlarmActiveUpdate(state == SystemState.ALARM), getSelf());
+        }
+    }
+
+    @Override public void postStop() {
+        if (exitTimeout != null) exitTimeout.cancel();
+        if (entryTimeout != null) entryTimeout.cancel();
+    }
+
+    private Map<String, List<String>> getZoneSensorCopy(){
+        return zoneSensors.entrySet().stream()
+            .collect(Collectors.toUnmodifiableMap(
+                Map.Entry::getKey,
+                e -> List.copyOf(e.getValue())
+            ));
     }
 }
