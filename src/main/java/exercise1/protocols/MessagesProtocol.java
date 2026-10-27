@@ -16,17 +16,17 @@ public abstract class MessagesProtocol {
     public record ZoneDeactivated(String zoneId){}
 
     // From UI to actors
-    public record GetZonesRequest(){} //controlUnit
-    public record GetSystemStateRequest(){} //controlUnit
-    public record CreateZone(String zoneId){} //controlUnit
+    public record GetZonesRequest(){}
+    public record GetSystemStateRequest(){}
+    public record CreateZone(String zoneId){}
     // Only if no sensor in the zone is present
-    public record DeleteZone(String zoneId){} //controlUnit
-    public record AssignSensorToZone(String zoneId, String sensorId){} //controlUnit
-    public record UpdateExitDelay(int seconds){} //controlUnit
-    public record UpdateEntryDelay(int seconds){} //controlUnit
-    public record PinEnteredWithZones(String pin, List<String> zonesToActive){} //controlUnit
-    public record PinEntered(String pin){} //controlUnit
-    public record SensorDetection(){} //actorSelection("/controlUnit/{sensorId}")
+    public record DeleteZone(String zoneId){}
+    public record AssignSensorToZone(String zoneId, String sensorId){}
+    public record UpdateExitDelay(int seconds){}
+    public record UpdateEntryDelay(int seconds){}
+    public record PinEnteredWithZones(String pin, List<String> zonesToActive){}
+    public record PinEntered(String pin){}
+    public record SensorDetection(){}
 
     // To UI from actors
     public record GetZonesReply(Map<String, List<String>> zoneSensors){}

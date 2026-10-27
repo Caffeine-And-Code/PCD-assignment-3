@@ -19,6 +19,12 @@ import java.util.stream.Collectors;
 
 public class ControlUnitActor extends AbstractActor {
 
+    private static final int EXIT_LOWER_LIMIT = 20;
+    private static final int EXIT_UPPER_LIMIT = 60;
+    private static final int ENTRY_LOWER_LIMIT = 10;
+    private static final int ENTRY_UPPER_LIMIT = 30;
+    private static final String CORRECT_PIN = "12345";
+
     public record ExitTimeout() {
     }
 
@@ -28,9 +34,8 @@ public class ControlUnitActor extends AbstractActor {
     private final HashMap<String, List<String>> zoneSensors = new HashMap<>();
     private SystemState state = SystemState.DISARMED;
     private ActorRef uiActorRef;
-    private int exitDelay = 30; //seconds
-    private int entryDelay = 30; //seconds
-    private final String correctPin = "12345";
+    private int exitDelay = 30;
+    private int entryDelay = 30;
 
     private Cancellable entryTimeout;
     private Cancellable exitTimeout;
@@ -38,9 +43,7 @@ public class ControlUnitActor extends AbstractActor {
     private final Set<String> activeZones = new HashSet<>();
 
     public ControlUnitActor(Map<String, List<String>> initialZoneSensors){
-        initialZoneSensors.forEach((zoneId, sensors) -> {
-            zoneSensors.put(zoneId, new ArrayList<>(sensors));
-        });
+        initialZoneSensors.forEach((zoneId, sensors) -> zoneSensors.put(zoneId, new ArrayList<>(sensors)));
     }
 
     @Override
@@ -123,7 +126,7 @@ public class ControlUnitActor extends AbstractActor {
     public void OnCreateZone(CreateZone createZone) {
         var zoneId = createZone.zoneId() == null ? "" : createZone.zoneId().trim();
         if (!zoneId.isEmpty() && org.apache.pekko.actor.ActorPath.isValidPathElement(zoneId)
-                && !getContext().findChild(zoneId).isPresent()) {
+                && getContext().findChild(zoneId).isEmpty()) {
             getContext().actorOf(Props.create(ZoneActor.class, getSelf(), zoneId), zoneId);
             this.zoneSensors.put(zoneId, new ArrayList<>());
         } else {
@@ -161,7 +164,7 @@ public class ControlUnitActor extends AbstractActor {
 
     public void OnUpdateExitDelay(UpdateExitDelay updateExitDelay) {
         var seconds = updateExitDelay.seconds();
-        if (seconds >= 20 && seconds <= 60) {
+        if (seconds >= EXIT_LOWER_LIMIT && seconds <= EXIT_UPPER_LIMIT) {
             exitDelay = seconds;
         }
 
@@ -170,7 +173,7 @@ public class ControlUnitActor extends AbstractActor {
 
     public void OnUpdateEntryDelay(UpdateEntryDelay updateEntryDelay) {
         var seconds = updateEntryDelay.seconds();
-        if (seconds >= 10 && seconds <= 30) {
+        if (seconds >= ENTRY_LOWER_LIMIT && seconds <= ENTRY_UPPER_LIMIT) {
             entryDelay = seconds;
         }
 
@@ -179,7 +182,7 @@ public class ControlUnitActor extends AbstractActor {
 
     public void OnPinEnteredFromDisarmed(PinEnteredWithZones pinEntered) {
         var pinAttempt = pinEntered.pin();
-        if (correctPin.equals(pinAttempt)) {
+        if (pinAttempt.equals(CORRECT_PIN)) {
             if (pinEntered.zonesToActive() == null || pinEntered.zonesToActive().isEmpty()
                     || !zoneSensors.keySet().containsAll(pinEntered.zonesToActive())) {
                 getSender().tell(new OperationRejected("Select at least one existing zone before arming."), getSelf());
@@ -195,7 +198,7 @@ public class ControlUnitActor extends AbstractActor {
 
     public void OnPinEnteredFromArmed(PinEntered pinEntered) {
         var pinAttempt = pinEntered.pin();
-        if (correctPin.equals(pinAttempt)) {
+        if (pinAttempt.equals(CORRECT_PIN)) {
             if (entryTimeout != null) {
                 entryTimeout.cancel();
             }
