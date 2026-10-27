@@ -1,113 +1,117 @@
 package exercise1.gui;
 
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleListProperty;
+import exercise1.protocols.MessagesProtocol.AssignSensorToZone;
+import exercise1.protocols.MessagesProtocol.SensorDetectionRequested;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseButton;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.TilePane;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import org.apache.pekko.actor.ActorRef;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-final class ZoneCanvas extends TilePane {
-    private static final int TILE_WIDTH = 120;
-    private static final int TILE_HEIGHT = 90;
-    private static final int PADDING = 3;
-    private static final double SATURATION = 0.25;
-    private static final double BRIGHTNESS = 0.95;
-
-    private final ListProperty<String> labels =
-            new SimpleListProperty<>(FXCollections.observableArrayList());
+final class ZoneCanvas extends VBox {
+    private final ActorRef uiActor;
     private final ZonePopupMenu menu;
-    private Map<String, Boolean> zoneStates = new HashMap<>();
+    private Map<String, List<String>> sensorsByZone = Map.of();
+    private Map<String, Boolean> zoneStates = Map.of();
+    private boolean editingEnabled = true;
+
+    ZoneCanvas(ActorRef uiActor, ZonePopupMenu menu) {
+        super(10);
+        this.uiActor = uiActor;
+        this.menu = menu;
+        setPadding(new Insets(3));
+    }
+
+    void setSensorsByZone(Map<String, List<String>> sensors) {
+        sensorsByZone = Map.copyOf(sensors);
+        rebuildZones();
+    }
 
     void setZoneStates(Map<String, Boolean> states) {
         zoneStates = Map.copyOf(states);
-        rebuildTiles();
+        rebuildZones();
     }
 
-    ZoneCanvas(List<String> initialLabels, ZonePopupMenu menu) {
-        this.menu = menu;
-
-        setPadding(new Insets(PADDING));
-        setHgap(PADDING);
-        setVgap(PADDING);
-        setPrefTileWidth(TILE_WIDTH);
-        setPrefTileHeight(TILE_HEIGHT);
-        setTileAlignment(Pos.CENTER);
-        setStyle("-fx-background-color: white;");
-
-        setOnMousePressed(event -> {
-            if (event.getButton() != MouseButton.SECONDARY) {
-                menu.hide();
-            }
-        });
-
-        labels.addListener((ListChangeListener<String>) change -> rebuildTiles());
-
-        setLabels(initialLabels);
+    void setEditingEnabled(boolean enabled) {
+        editingEnabled = enabled;
+        rebuildZones();
     }
 
-    // --- API ---
-
-    void setLabels(List<String> newLabels) {
-        labels.setAll(newLabels); // un solo evento di change
-    }
-
-    List<String> getLabels() {
-        return labels.get();
-    }
-
-    ListProperty<String> labelsProperty() {
-        return labels;
-    }
-
-    // --- interno ---
-
-    private void rebuildTiles() {
+    private void rebuildZones() {
+        menu.hide();
         getChildren().clear();
-        for (String label : labels) {
-            getChildren().add(createTile(label));
-        }
+        sensorsByZone.keySet().stream().sorted().forEach(zone -> getChildren().add(createZone(zone)));
     }
 
-    private StackPane createTile(String label) {
-        double hue = new Random(label.hashCode()).nextDouble() * 360;
-        Color color = Color.hsb(hue, SATURATION, BRIGHTNESS);
+    private VBox createZone(String zone) {
+        Label title = new Label(zone);
+        title.setStyle("-fx-font-weight: bold;");
+        HBox.setHgrow(title, Priority.ALWAYS);
+        title.setMaxWidth(Double.MAX_VALUE);
+        Label status = new Label(zoneStates.getOrDefault(zone, false) ? "Active" : "Inactive");
+        HBox heading = new HBox(8, title, status);
+        heading.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane tile = new StackPane(new Label(label + (zoneStates.getOrDefault(label, false) ? "\nActive" : "\nInactive")));
-        tile.setMinSize(TILE_WIDTH, TILE_HEIGHT);
-        tile.setPrefSize(TILE_WIDTH, TILE_HEIGHT);
-        tile.setMaxSize(TILE_WIDTH, TILE_HEIGHT);
-        tile.setStyle(
-                "-fx-background-color: " + toHex(color) + ";"
-                        + "-fx-border-color: #454545;"
-        );
+        VBox panel = new VBox(8, heading);
+        panel.setPadding(new Insets(10));
+        Color color = Color.hsb(new Random(zone.hashCode()).nextDouble() * 360, 0.25, 0.95);
+        panel.setStyle("-fx-background-color: " + toHex(color) + "; -fx-border-color: #454545;");
+        panel.setOnContextMenuRequested(event -> {
+            menu.showFor(panel, event.getScreenX(), event.getScreenY(), zone);
+            event.consume();
+        });
 
-        tile.setOnMouseClicked(event -> {
-            if (event.getButton() == MouseButton.SECONDARY) {
-                menu.showFor(tile, event.getScreenX(), event.getScreenY(), label);
-                event.consume();
+        List<String> sensors = sensorsByZone.get(zone);
+        if (sensors.isEmpty()) {
+            panel.getChildren().add(new Label("Nessun sensore"));
+        } else {
+            sensors.stream().sorted().forEach(sensor -> panel.getChildren().add(createSensor(sensor, zone)));
+        }
+        return panel;
+    }
+
+    private HBox createSensor(String sensor, String zone) {
+        Label name = new Label(sensor);
+        name.setMinWidth(70);
+        name.setMaxWidth(Double.MAX_VALUE);
+        name.setTooltip(new Tooltip(sensor));
+        HBox.setHgrow(name, Priority.ALWAYS);
+
+        Button detect = new Button("Attiva sensore");
+        detect.setOnAction(event -> uiActor.tell(new SensorDetectionRequested(sensor), ActorRef.noSender()));
+
+        List<String> destinations = sensorsByZone.keySet().stream()
+                .filter(destination -> !destination.equals(zone)).sorted().toList();
+        ComboBox<String> move = new ComboBox<>(FXCollections.observableArrayList(destinations));
+        move.setPromptText("Sposta in...");
+        move.setPrefWidth(145);
+        move.setDisable(!editingEnabled || destinations.isEmpty());
+        move.setAccessibleText("Sposta " + sensor + " in un'altra zona");
+        move.setOnAction(event -> {
+            String destination = move.getValue();
+            if (destination != null) {
+                uiActor.tell(new AssignSensorToZone(destination, sensor), ActorRef.noSender());
             }
         });
 
-        return tile;
+        HBox row = new HBox(8, name, detect, move);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
     }
 
     private String toHex(Color color) {
-        return String.format(
-                "#%02X%02X%02X",
-                Math.round(color.getRed() * 255),
-                Math.round(color.getGreen() * 255),
-                Math.round(color.getBlue() * 255)
-        );
+        return String.format("#%02X%02X%02X", Math.round(color.getRed() * 255),
+                Math.round(color.getGreen() * 255), Math.round(color.getBlue() * 255));
     }
 }

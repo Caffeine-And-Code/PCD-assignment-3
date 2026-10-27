@@ -31,15 +31,19 @@ public final class ZoneOverviewPanel extends BorderPane {
         alarm.setAlignment(Pos.CENTER_RIGHT);
 
         ZonePopupMenu popupMenu = new ZonePopupMenu(sensorsByZone, uiActor);
-        zoneCanvas = new ZoneCanvas(List.of(), popupMenu);
+        zoneCanvas = new ZoneCanvas(uiActor, popupMenu);
 
         javafx.scene.control.Button all = new javafx.scene.control.Button("Select all zones");
         all.setOnAction(event -> choices.values().forEach(box -> box.setSelected(true)));
         selection.getChildren().add(all);
         setBottom(selection);
         setTop(alarm);
-        setCenter(zoneCanvas);
-        BorderPane.setMargin(zoneCanvas, new Insets(6, 0, 0, 0));
+        javafx.scene.control.ScrollPane scroll = new javafx.scene.control.ScrollPane(zoneCanvas);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: white; -fx-background: white;");
+        setCenter(scroll);
+        BorderPane.setMargin(scroll, new Insets(6, 0, 8, 0));
     }
 
     public void setSensorsByZone(Map<String, List<String>> newMap) {
@@ -55,7 +59,7 @@ public final class ZoneOverviewPanel extends BorderPane {
         });
         sensorsByZone.clear();
         sensorsByZone.putAll(newMap);
-        zoneCanvas.setLabels(List.copyOf(sensorsByZone.keySet().stream().sorted().toList()));
+        zoneCanvas.setSensorsByZone(sensorsByZone);
         zoneCanvas.setZoneStates(zoneStates);
     }
 
@@ -66,6 +70,10 @@ public final class ZoneOverviewPanel extends BorderPane {
     public void setZoneStates(Map<String, Boolean> states) {
         zoneStates = Map.copyOf(states);
         zoneCanvas.setZoneStates(states);
+    }
+
+    public void setEditingEnabled(boolean enabled) {
+        zoneCanvas.setEditingEnabled(enabled);
     }
 
     public Label getSystemStateLabel() {

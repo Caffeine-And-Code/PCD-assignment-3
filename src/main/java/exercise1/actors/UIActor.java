@@ -120,6 +120,7 @@ public class UIActor extends AbstractActorWithStash {
 
         Platform.runLater(() -> {
             systemStateLabel.setText(label);
+            zoneCanvas.setEditingEnabled(data.state() == SystemState.DISARMED);
             zoneCanvas.setAlarmActive(data.state() == SystemState.ALARM);
         });
     }

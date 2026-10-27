@@ -41,10 +41,5 @@ final class ZonePopupMenu extends ContextMenu {
             return;
         }
 
-        // le zone vengono ricalcolate a ogni apertura, quindi sono sempre aggiornate
-        List<String> zones = List.copyOf(sensorsByZone.keySet());
-        for (String sensor : sensors) {
-            getItems().add(new SensorMenu(sensor, zone, zones, uiActor));
-        }
     }
 }

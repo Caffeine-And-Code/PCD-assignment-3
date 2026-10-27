@@ -22,8 +22,8 @@ Le richieste di creazione, eliminazione e riassegnazione, insieme alle modifiche
 
 La GUI propone una casella per ciascuna zona e un comando per selezionarle tutte. Il PIN corretto inserisce esclusivamente le zone selezionate; una selezione vuota viene rifiutata. Durante EXIT_DELAY la centrale conserva la selezione e le zone restano inattive. All'ingresso in ARMED invia ActiveZone alle sole zone selezionate e aggiorna la GUI, che le mostra come Active. Al disinserimento tutte le zone vengono disattivate, evitando che una selezione precedente rimanga attiva nel ciclo successivo.
 
-Porte, finestre e rilevatori di movimento sono rappresentati da attori sensore con nomi distinti. Il menu di ciascun sensore permette di generare una rilevazione simulata. In ALARM l'indicatore diventa rosso e la GUI ripete un segnale acustico di sistema fino al PIN corretto. L'audio dipende dalle impostazioni del computer. La simulazione conserva la configurazione in memoria durante l'esecuzione.
+Porte, finestre e rilevatori di movimento sono rappresentati da attori sensore con nomi distinti. Ogni zona mostra la propria lista di sensori. Ogni sensore ha un pulsante Attiva sensore per simulare una rilevazione e un selettore Sposta in... per assegnarlo a un'altra zona. UIActor invia la rilevazione direttamente al sensore; le richieste di spostamento vengono inoltrate alla centrale. Il selettore di spostamento è abilitato soltanto in DISARMED. In ALARM l'indicatore diventa rosso e la GUI ripete un segnale acustico di sistema fino al PIN corretto. L'audio dipende dalle impostazioni del computer. La simulazione conserva la configurazione in memoria durante l'esecuzione.
 
 ## Esecuzione
 
-Il progetto richiede JDK 21 e Maven. Il comando mvn javafx:run avvia l'applicazione; il PIN della simulazione è 12345. Il menu contestuale delle zone consente di attivare i sensori e spostarli. I controlli +/- configurano i ritardi.
+Il progetto richiede JDK 21 e Maven. Il comando mvn javafx:run avvia l'applicazione; il PIN della simulazione è 12345. I pulsanti e i selettori accanto ai sensori consentono di attivarli e spostarli. I controlli +/- configurano i ritardi.
