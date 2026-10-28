@@ -27,3 +27,11 @@ Porte, finestre e rilevatori di movimento sono rappresentati da attori sensore c
 ## Esecuzione
 
 Il progetto richiede JDK 21 e Maven. Il comando mvn javafx:run avvia l'applicazione; il PIN della simulazione è 12345. I pulsanti e i selettori accanto ai sensori consentono di attivarli e spostarli. I controlli +/- configurano i ritardi.
+
+# Esercizio 2 - Torneo in Go
+
+Ho organizzato l'algoritmo come un torneo a eliminazione diretta tra 2^m giocatori, ciascuno eseguito da una goroutine.
+Ogni coppia scambia tramite canali una scelta tra pari e dispari e un numero casuale da 0 a 5; la parità della somma determina il vincitore.
+Per evitare blocchi nello scambio sui canali non bufferizzati, il giocatore con identificativo minore invia per primo e l'altro riceve per primo.
+Il vincitore comunica il risultato sui canali bufferizzati degli altri giocatori, raccoglie gli esiti del turno e trova il prossimo avversario nella metà opposta del proprio gruppo del tabellone.
+Chi perde termina, mentre chi vince prosegue per m turni e, dopo la finale, invia il proprio identificativo sul canale done, permettendo al main di stampare il vincitore.
