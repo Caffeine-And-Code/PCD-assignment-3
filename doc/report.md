@@ -1,37 +1,47 @@
-# Esercizio 1 - Smart Home Alarm System
+# Documentazione
 
-## Analisi del problema
+## Autori
 
-Il sistema coordina eventi dei sensori, comandi del tastierino e scadenze temporali. Una rilevazione produce effetti diversi secondo lo stato corrente: viene ignorata in DISARMED e EXIT_DELAY, avvia ENTRY_DELAY in ARMED e non modifica il conto alla rovescia in ENTRY_DELAY. La scadenza di ingresso porta ad ALARM. Il PIN corretto avvia l'inserimento da DISARMED e disinserisce il sistema dagli altri stati.
+- Mattia Senni (mattia.senni@studio.unibo.it)
+- Fabio Fattori (fabio.fattori3@studio.unibo.it)
+- Francesco Tonelli (francesco.tonelli9@studio.unibo.it)
 
-Le rilevazioni, il PIN e i timeout possono arrivare contemporaneamente. La centrale li elabora in ordine di mailbox, senza bloccare il dispatcher durante le attese. Se PIN e scadenza sono concorrenti, l'ordine di elaborazione decide se si passa prima dall'allarme; il PIN corretto consente comunque di tornare a DISARMED.
+## Esercizio 1
 
-## Strategia ad attori
+### Analisi
 
-ControlUnitActor conserva lo stato globale, il PIN, i ritardi e l'associazione fra sensori e zone. Usa become per installare il comportamento corrispondente ai cinque stati. Ogni zona è un ZoneActor e ogni sensore è un SensorActor, entrambi figli della centrale. Un sensore inoltra la rilevazione alla propria zona; soltanto una zona attiva la inoltra alla centrale. La centrale verifica anche che il mittente sia una delle zone selezionate.
+Il sistema può essere descritto, almeno a livello della centralina, come una macchina a stati, la cui coordinazione avviene però tramite invii asincroni di messaggi e stati locali degli attori coinvolti (in questo caso i sensori, il tastierino e la centralina stessa). 
+- La centralina elabora un messaggio alla volta nella propria mailbox; 
+- I messaggi vengono elaborati in ordine FIFO;
+- I ritardi sono rappresentati da messaggi programmati, evitando di bloccare un thread durante l'attesa.
 
-La configurazione viene copiata all'avvio. Gli aggiornamenti inviati alla GUI contengono copie immutabili delle mappe e delle liste. Lo stato degli attori resta confinato alle rispettive mailbox. UIActor raccoglie le cinque cifre del PIN e inoltra i comandi; gli aggiornamenti dei controlli JavaFX vengono eseguiti tramite Platform.runLater sul thread della GUI. Prima del collegamento dei controlli, UIActor accoda i messaggi con stash.
+### Sviluppo
 
-## Ritardi e coerenza della configurazione
+`ControlUnitActor` conserva lo stato globale, il PIN, i ritardi e l'associazione tra zone e sensori. 
+- usa `become` per installare gli handler ammessi in ciascuno stato;
+- limita le modifiche alla configurazione dei delay solo in stato `DISARMED`, per evitare casi di inconsistenza;
+- accetta ritardi di uscita tra 20 e 60 secondi e di ingresso tra 10 e 30 secondi, come indicato dalla consegna;
+- valida i nomi delle nuove zone, rendendoli univoci;
+- elimina solo zone vuote, sempre per evitare inconsistenze.
 
-Lo scheduler Pekko invia un messaggio alla centrale allo scadere di ciascun ritardo. I valori iniziali sono 30 secondi; l'uscita è configurabile tra 20 e 60 secondi e l'ingresso tra 10 e 30 secondi. Il disinserimento cancella entrambi i timer. I timeout già accodati vengono elaborati secondo il comportamento corrente dell'attore, senza identificatori di generazione.
+Ogni sensore è un `SensorActor` e inoltra le rilevazioni al proprio `ZoneActor`. 
+- una zona attiva le inoltra alla centrale, che controlla anche che il mittente appartenga alle zone selezionate; 
+- alla fine del delay di uscita la centrale invia `ActiveZone` alle sole zone scelte;
+- il disarmo annulla i timer e invia `DeactiveZone` a tutte le zone; 
+- lo spostamento di un sensore aggiorna la mappa della centrale e il riferimento alla zona conservato dal sensore.
 
-Le richieste di creazione, eliminazione e riassegnazione, insieme alle modifiche dei ritardi, hanno un handler soltanto in DISARMED e vengono ignorate negli altri stati. La configurazione rimane così stabile durante un ciclo di sorveglianza. Nomi non validi o duplicati non creano attori. Una zona può essere eliminata soltanto se vuota. Lo spostamento di un sensore aggiorna sia la mappa della centrale sia il riferimento alla zona conservato dal sensore; i successivi messaggi della centrale verso quel sensore rispettano l'ordine di invio.
+`UIActor` collega la logica alla GUI JavaFX. 
+- accoda con `stash` i messaggi ricevuti prima di `BindUi`;
+- raccoglie le cifre del PIN, una ad una; 
+- inoltra le richieste alla centrale; 
+- gestisce le modifiche ai controlli grafici passando da `Platform.runLater`; 
 
-## Inserimento totale e parziale
+Per quanto riguarda la GUI, invece:
+- gli aggiornamenti della mappa con le zone e i sensori contengono copie immutabili, così non modifica lo stato della centrale;
+- in stato di `ALARM`, l'indicatore in alto a destra lampeggia di rosso per simulare la sirena
 
-La GUI propone una casella per ciascuna zona e un comando per selezionarle tutte. Il PIN corretto inserisce esclusivamente le zone selezionate; una selezione vuota viene rifiutata. Durante EXIT_DELAY la centrale conserva la selezione e le zone restano inattive. All'ingresso in ARMED invia ActiveZone alle sole zone selezionate e aggiorna la GUI, che le mostra come Active. Al disinserimento tutte le zone vengono disattivate, evitando che una selezione precedente rimanga attiva nel ciclo successivo.
+## Esercizio 2
 
-Porte, finestre e rilevatori di movimento sono rappresentati da attori sensore con nomi distinti. Ogni zona mostra la propria lista di sensori. Ogni sensore ha un pulsante Attiva sensore per simulare una rilevazione e un selettore Sposta in... per assegnarlo a un'altra zona. UIActor invia la rilevazione direttamente al sensore; le richieste di spostamento vengono inoltrate alla centrale. Il selettore di spostamento è abilitato soltanto in DISARMED. In ALARM l'indicatore diventa rosso e la GUI ripete un segnale acustico di sistema fino al PIN corretto. L'audio dipende dalle impostazioni del computer. La simulazione conserva la configurazione in memoria durante l'esecuzione.
+### Analisi
 
-## Esecuzione
-
-Il progetto richiede JDK 21 e Maven. Il comando mvn javafx:run avvia l'applicazione; il PIN della simulazione è 12345. I pulsanti e i selettori accanto ai sensori consentono di attivarli e spostarli. I controlli +/- configurano i ritardi.
-
-# Esercizio 2 - Torneo in Go
-
-Ho organizzato l'algoritmo come un torneo a eliminazione diretta tra 2^m giocatori, ciascuno eseguito da una goroutine.
-Ogni coppia scambia tramite canali una scelta tra pari e dispari e un numero casuale da 0 a 5; la parità della somma determina il vincitore.
-Per evitare blocchi nello scambio sui canali non bufferizzati, il giocatore con identificativo minore invia per primo e l'altro riceve per primo.
-Il vincitore comunica il risultato sui canali bufferizzati degli altri giocatori, raccoglie gli esiti del turno e trova il prossimo avversario nella metà opposta del proprio gruppo del tabellone.
-Chi perde termina, mentre chi vince prosegue per m turni e, dopo la finale, invia il proprio identificativo sul canale done, permettendo al main di stampare il vincitore.
+### Sviluppo
