@@ -25,20 +25,20 @@ Il sistema può essere descritto, almeno a livello della centralina, come una ma
 - elimina solo zone vuote, sempre per evitare inconsistenze.
 
 Ogni sensore è un `SensorActor` e inoltra le rilevazioni al proprio `ZoneActor`. 
-- una zona attiva le inoltra alla centrale, che controlla anche che il mittente appartenga alle zone selezionate; 
+- una zona attiva le inoltra alla centrale, che controlla anche che il mittente appartenga a una delle zone selezionate; 
 - alla fine del delay di uscita la centrale invia `ActiveZone` alle sole zone scelte;
 - il disarmo annulla i timer e invia `DeactiveZone` a tutte le zone; 
 - lo spostamento di un sensore aggiorna la mappa della centrale e il riferimento alla zona conservato dal sensore.
 
 `UIActor` collega la logica alla GUI JavaFX. 
 - accoda con `stash` i messaggi ricevuti prima di `BindUi`;
-- raccoglie le cifre del PIN, una ad una; 
+- raccoglie le cifre del PIN, una per volta; 
 - inoltra le richieste alla centrale; 
-- gestisce le modifiche ai controlli grafici passando da `Platform.runLater`; 
+- gestisce le modifiche ai controlli grafici passando da `Platform.runLater`.
 
-Per quanto riguarda la GUI, invece:
+Per quanto riguarda la GUI, infine:
 - gli aggiornamenti della mappa con le zone e i sensori contengono copie immutabili, così non modifica lo stato della centrale;
-- in stato di `ALARM`, l'indicatore in alto a destra lampeggia di rosso per simulare la sirena
+- in stato di `ALARM`, l'indicatore in alto a destra lampeggia di rosso per simulare la sirena.
 
 ## Esercizio 2
 
