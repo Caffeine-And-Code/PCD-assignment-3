@@ -44,4 +44,19 @@ Per quanto riguarda la GUI, infine:
 
 ### Analisi
 
+In questo problema, la principale difficoltà a livello di concorrenza è far scambiare ai due avversari le proprie mosse senza blocchi reciproci, coordinando i vincitori per formare le coppie del turno successivo. Di conseguenza: 
+- ogni coppia deve completare lo scambio di scelta e numero prima di calcolare l'esito;
+- i canali non bufferizzati richiedono un ordine complementare tra invio e ricezione;
+- i giocatori che proseguono devono conoscere i risultati delle altre partite del turno per individuare il prossimo avversario.
+
 ### Sviluppo
+
+Di seguito, vengono elencati gli aspetti principali dell'applicativo sviluppato:
+- il numero di match è fissato dal codice, a riga 117, dalla variabile `m`, la quale è però modificabile a piacimento per variare numero di turni e giocatori;
+- il programma calcola il numero di giocatori, crea i canali e avvia una goroutine per ciascun Player; 
+- scelte, numeri ed esiti sono comunicati tramite canali, senza condividere lo stato delle partite;
+- i canali `players` sono non bufferizzati. Il giocatore con ID minore invia per primo, mentre l'altro riceve per primo, evitando lo stallo;
+- i due giocatori scelgono parità opposte e scambiano un numero casuale tra 0 e 5. La parità della somma determina il vincitore;
+- il vincitore invia un `MatchResult` agli altri giocatori e raccoglie gli esiti delle restanti partite del turno. I canali `matchResults` sono bufferizzati perché i giocatori eliminati non ricevono più messaggi;
+- a ogni turno la dimensione del gruppo raddoppia. Il vincitore cerca nei risultati l'avversario della metà opposta del gruppo, mentre chi perde termina la propria esecuzione;
+- dopo la finale, il vincitore invia il proprio ID sul canale `done`. Il processo principale riceve l'ID e stampa il risultato.

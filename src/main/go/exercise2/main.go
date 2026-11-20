@@ -15,63 +15,63 @@ func Player(pid int, m int, players []chan int, matchResults []chan MatchResult,
 
 	fmt.Printf("Hi from Player %d\n", pid)
 
-	player_len := 1 << m
+	playerLen := 1 << m
 
-	opponent_id := pid
+	opponentId := pid
 	if pid%2 == 0 {
-		opponent_id = pid + 1
+		opponentId = pid + 1
 	} else {
-		opponent_id = pid - 1
+		opponentId = pid - 1
 	}
 
-	match_num := player_len / 2
+	matchNum := playerLen / 2
 
 	for round := range m {
 		choose := rand.Intn(2)
 		number := rand.Intn(6)
-		opponent_choose := 1 - choose
-		opponent_number := 0
-		player_a := 0
-		player_b := 0
+		opponentChoose := 1 - choose
+		opponentNumber := 0
+		playerA := 0
+		playerB := 0
 
-		if pid < opponent_id {
-			player_a = pid
-			player_b = opponent_id
-			fmt.Printf("[Player %d] -> Inizio match player %d vs player %d\n", pid, pid, opponent_id)
-			players[opponent_id] <- choose
-			opponent_choose = <-players[pid]
+		if pid < opponentId {
+			playerA = pid
+			playerB = opponentId
+			fmt.Printf("[Player %d] -> Starting match against player %d\n", pid, opponentId)
+			players[opponentId] <- choose
+			opponentChoose = <-players[pid]
 		} else {
-			player_a = opponent_id
-			player_b = pid
-			opponent_choose = <-players[pid]
-			choose = 1 - opponent_choose
-			players[opponent_id] <- choose
+			playerA = opponentId
+			playerB = pid
+			opponentChoose = <-players[pid]
+			choose = 1 - opponentChoose
+			players[opponentId] <- choose
 		}
 
-		fmt.Printf("[Player %d] -> Il player %d ha scelto %d\n", pid, opponent_id, opponent_choose)
+		fmt.Printf("[Player %d] -> Player %d choose %d\n", pid, opponentId, opponentChoose)
 
-		if pid < opponent_id {
-			players[opponent_id] <- number
-			opponent_number = <-players[pid]
+		if pid < opponentId {
+			players[opponentId] <- number
+			opponentNumber = <-players[pid]
 		} else {
-			opponent_number = <-players[pid]
-			players[opponent_id] <- number
+			opponentNumber = <-players[pid]
+			players[opponentId] <- number
 		}
 
-		isOdd := (number+opponent_number)%2 == 0
+		isOdd := (number+opponentNumber)%2 == 0
 
 		if (choose == 0 && isOdd == true) ||
 			(choose == 1 && isOdd == false) {
 
-			fmt.Printf("[Player %d] -> Ho vinto!\n", pid)
+			fmt.Printf("[Player %d] -> I won!\n", pid)
 
 			result := MatchResult{
-				playerA: player_a,
-				playerB: player_b,
+				playerA: playerA,
+				playerB: playerB,
 				winner:  pid,
 			}
 
-			for i := range player_len {
+			for i := range playerLen {
 				if i != pid {
 					matchResults[i] <- result
 				}
@@ -82,32 +82,32 @@ func Player(pid int, m int, players []chan int, matchResults []chan MatchResult,
 				return
 			}
 
-			roundResults := make([]MatchResult, 0, match_num-1)
+			roundResults := make([]MatchResult, 0, matchNum-1)
 
-			for i := 0; i < match_num-1; i++ {
-				match_result := <-matchResults[pid]
-				roundResults = append(roundResults, match_result)
+			for i := 0; i < matchNum-1; i++ {
+				matchResult := <-matchResults[pid]
+				roundResults = append(roundResults, matchResult)
 			}
 
-			group_size := 1 << (round + 2)
-			half_group_size := group_size / 2
-			other_group_start := (pid / group_size) * group_size
-			if pid < other_group_start+half_group_size {
-				other_group_start = other_group_start + half_group_size
+			groupSize := 1 << (round + 2)
+			halfGroupSize := groupSize / 2
+			otherGroupStart := (pid / groupSize) * groupSize
+			if pid < otherGroupStart+halfGroupSize {
+				otherGroupStart = otherGroupStart + halfGroupSize
 			}
 
 			for _, result := range roundResults {
-				if result.playerA >= other_group_start && result.playerA < other_group_start+half_group_size {
-					opponent_id = result.winner
-					fmt.Printf("[Player %d] -> Prossimo avversario: Player %d\n", pid, opponent_id)
+				if result.playerA >= otherGroupStart && result.playerA < otherGroupStart+halfGroupSize {
+					opponentId = result.winner
+					fmt.Printf("[Player %d] -> Next opponent: Player %d\n", pid, opponentId)
 					break
 				}
 			}
 
-			match_num = match_num / 2
+			matchNum = matchNum / 2
 
 		} else {
-			fmt.Printf("[Player %d] -> Ho perso!\n", pid)
+			fmt.Printf("[Player %d] -> I lost!\n", pid)
 			break
 		}
 	}
@@ -115,19 +115,19 @@ func Player(pid int, m int, players []chan int, matchResults []chan MatchResult,
 
 func main() {
 	m := 3
-	player_len := 1 << m
+	playerLen := 1 << m
 
-	players := make([]chan int, player_len)
-	matchResults := make([]chan MatchResult, player_len)
+	players := make([]chan int, playerLen)
+	matchResults := make([]chan MatchResult, playerLen)
 
 	done := make(chan int)
 
-	for i := range player_len {
+	for i := range playerLen {
 		players[i] = make(chan int)
-		matchResults[i] = make(chan MatchResult, player_len*m)
+		matchResults[i] = make(chan MatchResult, playerLen*m)
 	}
 
-	for i := range player_len {
+	for i := range playerLen {
 		go Player(i, m, players, matchResults, done)
 	}
 
